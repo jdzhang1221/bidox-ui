@@ -30,7 +30,7 @@ export const overridesPreferences = defineOverridesPreferences({
   },
   copyright: {
     companyName: import.meta.env.VITE_APP_TITLE,
-    companySiteLink: 'https://gitee.com/yudaocode/yudao-ui-admin-vben',
+    companySiteLink: 'https://github.com/jdzhang1221/bidox-ui',
   },
 });
 

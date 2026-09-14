@@ -137,6 +137,20 @@ src/views/
   - 3 个 Modal（`dept` / `user` 的 `select-modal`、`social/user` 的 `detail`）：`useVbenModal` 未传 data 泛型，`modalApi.getData()` 被推断为 `{}`；补上 `useVbenModal<{...}>()` 泛型
 
   上述 3 类 bug 在 `web-antd` / `web-ele` / `web-antdv-next` 中同构存在，均已修复。
+- **清理用户可见的上游品牌与导流入口**：
+  - `views/dashboard/workspace`：首页「项目」卡片原展示 6 个上游 GitHub 仓库，改为 BidOx 三端；
+    「快捷入口」原指向 `/mall` `/ai` `/erp` `/crm` `/iot` —— **这些模块已随清理删除，全是死链**，
+    改为系统管理 / 基础设施的真实路由（`/system/user`、`/infra/job` 等，路径取自后端 `system_menu`）；
+    待办文案改为 BidOx 业务主链路
+  - `packages/effects/layouts/src/widgets/help/help.vue`：移除「软件外包」广告位（含 `wx-xingyu.png` 二维码
+    与 `shuduokeji.com` 外链），项目地址 / issues 改为 BidOx 仓库，文档改为 Vben 官方文档
+  - 删除 `packages/effects/common-ui/src/ui/authentication/doc-link.vue`（登录页「萌新必读」，
+    4 个入口全部指向 `iocoder.cn` 教程与外包咨询；该组件此前已被注释、未渲染）
+  - 5 个 app 的 `preferences.ts` 页脚 `companySiteLink`、`.env` 的 `VITE_APP_NAMESPACE`
+    由 `yudao-*` 改为 `bidox-*` / BidOx 仓库
+  - `packages/@core/base/shared/src/constants/vben.ts`、`internal/vite-config` 的框架级
+    `VBEN_GITHUB_URL` / `VBEN_DOC_URL` / 控制台 Docs 链接，由 yudao / iocoder 改回 Vben 官方地址
+  - 删除 5 个 app `public/wx-xingyu.png` 与上游 Gitee 遗留目录 `.gitee/`
 
   修复后 **`pnpm check:type` 全仓通过（5 个 app 全部 0 错误）**，提交钩子不再需要 `--no-verify`。
 
@@ -148,9 +162,12 @@ src/views/
 
 ### ⚠️ 待处理
 
+- **业务页面的上游文档外链仍未处理**：`views/infra`、`views/system` 等业务页面里还有 **242 处 / 168 个文件**的 `<DocAlert url="https://doc.iocoder.cn/...">`（系统日志、代码生成等功能说明）。BidOx 目前没有文档站，改成什么是产品决策，暂未动。
+- **`web-ele` 的商城死配置**：`apps/web-ele/.env.development` / `.env.production` 中 `VITE_MALL_H5_DOMAIN='http://mall.yudao.iocoder.cn'` 已无任何代码引用（商城模块已删），可删未删。
+- **少量代码注释仍带上游署名**：`access.ts` / `guard.ts` 中的 `add by 芋艿`、`use-api-select.tsx` 中的「yudao-vue-pro 标准返回」等说明性注释。
 - **⚠️ 依赖安装的坑**：若 `apps/*/node_modules` 缺失，会出现 `vue-tsc` 报 `TS2688: Cannot find type definition file for '@vben/types/global'`、`vite build` 报 `[sass] Can't find stylesheet to import @vben/styles/global`。**根 `pnpm install --frozen-lockfile` 会误报 "Already up to date" 且不补齐**，须用 `pnpm install --filter @vben/web-antd` 这类带 filter 的命令才会真正生成 app 级 `node_modules`。
-- **pre-commit 钩子较重**：`oxlint` / `oxfmt` / `eslint` / `stylelint` + 全量 `pnpm check:type`（约 5 分钟），需 `NODE_OPTIONS=--max-old-space-size=8192` 避免 OOM。
-- **备选应用未安装依赖**：`web-ele` / `web-naive` / `web-antdv-next` / `web-tdesign` 仍保留上游代码，但其 `node_modules` 未安装且不在维护范围，暂不可用。
+- **改 `internal/vite-config/src` 后必须重建**：应用消费的是 `dist/index.mjs`，源码改动后需 `pnpm --filter @vben/vite-config run stub` 才会生效。
+- **pre-commit 钩子较重**：`oxlint` / `oxfmt` / `eslint` / `stylelint` + 全量 `pnpm check:type`，需 `NODE_OPTIONS=--max-old-space-size=8192` 避免 OOM。
 
 ## 常用命令
 

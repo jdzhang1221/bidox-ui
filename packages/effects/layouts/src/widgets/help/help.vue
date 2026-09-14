@@ -33,17 +33,7 @@ const [Modal, modalApi] = useVbenModal({
           <p class="w-24 p-2">项目地址:</p>
           <VbenButton
             variant="link"
-            @click="
-              openWindow('https://gitee.com/yudaocode/yudao-ui-admin-vben')
-            "
-          >
-            Gitee
-          </VbenButton>
-          <VbenButton
-            variant="link"
-            @click="
-              openWindow('https://github.com/yudaocode/yudao-ui-admin-vben')
-            "
+            @click="openWindow('https://github.com/jdzhang1221/bidox-ui')"
           >
             Github
           </VbenButton>
@@ -54,19 +44,7 @@ const [Modal, modalApi] = useVbenModal({
           <VbenButton
             variant="link"
             @click="
-              openWindow(
-                'https://gitee.com/yudaocode/yudao-ui-admin-vben/issues',
-              )
-            "
-          >
-            Gitee
-          </VbenButton>
-          <VbenButton
-            variant="link"
-            @click="
-              openWindow(
-                'https://github.com/yudaocode/yudao-ui-admin-vben/issues',
-              )
+              openWindow('https://github.com/jdzhang1221/bidox-ui/issues')
             "
           >
             Github
@@ -77,9 +55,9 @@ const [Modal, modalApi] = useVbenModal({
           <p class="w-24 p-2">开发文档:</p>
           <VbenButton
             variant="link"
-            @click="openWindow('https://doc.iocoder.cn/quick-start/')"
+            @click="openWindow('https://doc.vben.pro/')"
           >
-            项目文档
+            Vben 文档
           </VbenButton>
           <VbenButton variant="link" @click="openWindow('https://antdv.com/')">
             antdv 文档
@@ -87,19 +65,9 @@ const [Modal, modalApi] = useVbenModal({
         </VbenButtonGroup>
       </div>
 
-      <div class="mt-2 flex justify-start">
-        <p class="w-24 p-2">软件外包:</p>
-        <img
-          src="/wx-xingyu.png"
-          alt="数舵科技"
-          class="cursor-pointer"
-          width="80%"
-          @click="openWindow('https://shuduokeji.com')"
-        />
-      </div>
       <p class="mt-2 flex justify-center pt-4 text-sm italic">
-        本项目采用 <Badge class="mx-2" variant="destructive">MIT</Badge>
-        开源协议，个人与企业可100% 免费使用
+        基于 <Badge class="mx-2" variant="destructive">MIT</Badge>
+        开源协议构建
       </p>
     </div>
   </Modal>
