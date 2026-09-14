@@ -165,7 +165,7 @@ class RequestClient {
 /**
  * 构建排序字段，处理 vxe 排序条件
  *
- * add by 芋艿
+ * add by bidox
  */
 export const buildSortingField = (sorts: any[]) => {
   if (!sorts || sorts.length === 0) {

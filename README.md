@@ -151,6 +151,9 @@ src/views/
   - `packages/@core/base/shared/src/constants/vben.ts`、`internal/vite-config` 的框架级
     `VBEN_GITHUB_URL` / `VBEN_DOC_URL` / 控制台 Docs 链接，由 yudao / iocoder 改回 Vben 官方地址
   - 删除 5 个 app `public/wx-xingyu.png` 与上游 Gitee 遗留目录 `.gitee/`
+- **代码注释署名统一**：**67 处** `add by 芋艿` / `TODO @芋艿` 改为 `bidox`（与上一轮 `@author 芋道源码 → @author bidox` 口径一致）；
+  另把注释正文中 18 处 `yudao` 改为中性表述（「yudao-vue-pro 标准返回」→「后端标准返回」、
+  「由于 yudao 是 fetchUserInfo…」→「由于后端是…」、`yudao-ui-admin-vben issue` → `upstream vben issue`）
 
   修复后 **`pnpm check:type` 全仓通过（5 个 app 全部 0 错误）**，提交钩子不再需要 `--no-verify`。
 
@@ -164,7 +167,7 @@ src/views/
 
 - **业务页面的上游文档外链仍未处理**：`views/infra`、`views/system` 等业务页面里还有 **242 处 / 168 个文件**的 `<DocAlert url="https://doc.iocoder.cn/...">`（系统日志、代码生成等功能说明）。BidOx 目前没有文档站，改成什么是产品决策，暂未动。
 - **`web-ele` 的商城死配置**：`apps/web-ele/.env.development` / `.env.production` 中 `VITE_MALL_H5_DOMAIN='http://mall.yudao.iocoder.cn'` 已无任何代码引用（商城模块已删），可删未删。
-- **少量代码注释仍带上游署名**：`access.ts` / `guard.ts` 中的 `add by 芋艿`、`use-api-select.tsx` 中的「yudao-vue-pro 标准返回」等说明性注释。
+- **`helpers.ts` 里的上游 PR 链接**：`components/form-create/helpers.ts` 保留了一条 `gitee.com/yudaocode/.../pulls/834` 的技术溯源链接，属外部公开 PR、不影响产品，暂未动。
 - **⚠️ 依赖安装的坑**：若 `apps/*/node_modules` 缺失，会出现 `vue-tsc` 报 `TS2688: Cannot find type definition file for '@vben/types/global'`、`vite build` 报 `[sass] Can't find stylesheet to import @vben/styles/global`。**根 `pnpm install --frozen-lockfile` 会误报 "Already up to date" 且不补齐**，须用 `pnpm install --filter @vben/web-antd` 这类带 filter 的命令才会真正生成 app 级 `node_modules`。
 - **改 `internal/vite-config/src` 后必须重建**：应用消费的是 `dist/index.mjs`，源码改动后需 `pnpm --filter @vben/vite-config run stub` 才会生效。
 - **pre-commit 钩子较重**：`oxlint` / `oxfmt` / `eslint` / `stylelint` + 全量 `pnpm check:type`，需 `NODE_OPTIONS=--max-old-space-size=8192` 避免 OOM。

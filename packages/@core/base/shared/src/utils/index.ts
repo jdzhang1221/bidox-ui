@@ -21,7 +21,7 @@ export * from './update-css-variables';
 export * from './upload';
 export * from './url';
 export * from './util';
-export * from './uuid'; // add by 芋艿：从 vben2.0 复制
+export * from './uuid'; // add by bidox：从 vben2.0 复制
 export * from './window';
 export { debounce, get, isEqual, set } from 'es-toolkit/compat';
 // export { cloneDeep } from 'es-toolkit/object';

@@ -112,7 +112,7 @@ function convertServerMenuToRouteRecordStringComponent(
   menuList.forEach((menu) => {
     // 处理外链菜单（顶级或子级）
     if (isHttpUrl(menu.path)) {
-      // add by 芋艿：如果有 ?_iframe 参数，则作为内嵌页面处理
+      // add by bidox：如果有 ?_iframe 参数，则作为内嵌页面处理
       // 如果有 _iframe 参数，则使用 iframeSrc；如果没有，则使用 link
       const url = new URL(menu.path);
       let link: string | undefined;
@@ -159,7 +159,7 @@ function convertServerMenuToRouteRecordStringComponent(
       menu.path = `/${menu.path}`;
     }
 
-    // add by 芋艿：防止 name 重复，只有在 name 重复时，才自动添加 id
+    // add by bidox：防止 name 重复，只有在 name 重复时，才自动添加 id
     let finalName = menu.componentName || menu.name;
     if (nameSet.has(finalName)) {
       finalName = menu.name + menu.id;
@@ -167,10 +167,10 @@ function convertServerMenuToRouteRecordStringComponent(
     }
     nameSet.add(finalName);
 
-    // add by 芋艿：处理 menu.component 中的 query 参数
+    // add by bidox：处理 menu.component 中的 query 参数
     // https://doc.vben.pro/guide/essentials/route.html#query
     let query: Record<string, string> | undefined;
-    // add by 芋艿：防止 component 为 null 时，调用 indexOf 报错；关联
+    // add by bidox：防止 component 为 null 时，调用 indexOf 报错；关联
     if (!menu.component) {
       menu.component = '';
     }

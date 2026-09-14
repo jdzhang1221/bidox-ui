@@ -79,7 +79,7 @@ function useVbenForm<
 }
 
 export { initSetupVbenForm, useVbenForm, z };
-export type VbenFormApi = ReturnType<typeof useVbenForm>[1]; // add by 芋艿：用于 data.ts 表单 schema 内调用 setFieldValue
+export type VbenFormApi = ReturnType<typeof useVbenForm>[1]; // add by bidox：用于 data.ts 表单 schema 内调用 setFieldValue
 export type VbenFormSchema<TValues extends FormValues = FormValues> =
   FormSchema<ComponentType, ComponentPropsMap, TValues>;
 export type VbenFormProps<

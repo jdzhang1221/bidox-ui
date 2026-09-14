@@ -25,7 +25,7 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   return await generateAccessible(preferences.app.accessMode, {
     ...options,
     fetchMenuListAsync: async () => {
-      // 由于 yudao 通过 accessStore 读取，所以不在进行 message.loading 提示
+      // 由于后端通过 accessStore 读取，所以不在进行 message.loading 提示
       // 补充说明：accessStore.accessMenus 一开始是 AppRouteRecordRaw 类型（后端加载），后面被赋值成 MenuRecordRaw 类型（前端转换）
       const accessMenus = accessStore.accessMenus as AppRouteRecordRaw[];
       return convertServerMenuToRouteRecordStringComponent(accessMenus);

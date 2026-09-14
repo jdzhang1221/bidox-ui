@@ -9,7 +9,9 @@ const dynamicRouteFiles = import.meta.glob('./modules/**/*.ts', {
 });
 
 // 有需要可以自行打开注释，并创建文件夹
-const externalRouteFiles = import.meta.glob('./external/**/*.ts', { eager: true });
+const externalRouteFiles = import.meta.glob('./external/**/*.ts', {
+  eager: true,
+});
 // const staticRouteFiles = import.meta.glob('./static/**/*.ts', { eager: true });
 
 /** 动态路由 */
@@ -34,7 +36,7 @@ const coreRouteNames = traverseTreeValues(coreRoutes, (route) => route.name);
 /** 有权限校验的路由列表，包含动态路由和静态路由 */
 const accessRoutes = [...dynamicRoutes, ...staticRoutes];
 
-// add by 芋艿：from https://github.com/vbenjs/vue-vben-admin/blob/main/playground/src/router/routes/index.ts#L38-L45
+// add by bidox：from https://github.com/vbenjs/vue-vben-admin/blob/main/playground/src/router/routes/index.ts#L38-L45
 const componentKeys: string[] = Object.keys(
   import.meta.glob('../../views/**/*.vue'),
 )
