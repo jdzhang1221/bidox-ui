@@ -49,7 +49,9 @@ function buildDeptTreeNode(dept: SystemDeptApi.Dept): DataNode {
   };
 }
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<{
+  selectedList?: SystemDeptApi.Dept[];
+}>({
   async onConfirm() {
     // 获取选中的部门 ID
     const selectedIds: number[] = Array.isArray(selectedDeptIds.value)
@@ -83,7 +85,7 @@ const [Modal, modalApi] = useVbenModal({
       if (data.selectedList?.length) {
         const selectedIds = data.selectedList
           .map((dept: SystemDeptApi.Dept) => dept.id)
-          .filter((id: number) => id !== undefined);
+          .filter((id): id is number => id !== undefined);
         selectedDeptIds.value = props.checkStrictly
           ? {
               checked: selectedIds,

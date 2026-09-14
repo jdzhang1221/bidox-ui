@@ -1,45 +1,180 @@
+# BidOx UI · 前端服务
 
+**BidOx（数牛智标）** 是面向招投标场景的 AI 写标书 SaaS 平台，业务主链路为：
 
-## 🐯 平台简介
+> 招标文件理解 → 评分点拆解 → 企业知识匹配 → AI 标书生成 → 评分点审核
 
-**标牛**，BidOx = 招标文件理解 + 评分点拆解 + 企业知识匹配 + AI标书生成 + 评分点审核。
+`bidox-ui` 是平台的三端之一，承担 **前端（Web 端管理后台）** 职责，基于 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) v5.7.0 二次开发。
 
-- 采用最新 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) v5.7.0 实现
-- 支持 [Ant Design Vue](https://www.antdv.com/) | [Element Plus](https://element-plus.org/zh-CN/) | [Naive UI](https://www.naiveui.com/) | [TDesign](https://tdesign.tencent.com/) 多种免费开源的中后台模版，具备如下特性：
-
-
-
-- **最新技术栈**：使用 Vue3、Vite8 等前端前沿技术开发
-- **TypeScript**: 应用程序级 JavaScript 的语言
-- **主题**: 提供多套主题色彩，可配置自定义主题
-- **国际化**：内置完善的国际化方案
-- **权限**：内置完善的动态路由权限生成方案
-- **组件**：二次封装了多个常用的组件
-- **示例**：内置丰富的示例
-
+> **当前阶段：前端框架就绪，BidOx 业务页面尚未开发。** 详见 [当前进展](#当前进展)。
 
 ## 技术栈
 
 | 框架 | 说明 | 版本 |
 | --- | --- | --- |
-| [Vue](https://staging-cn.vuejs.org/) | vue框架 | 3.5.35 |
-| [Vite](https://cn.vitejs.dev//) | 开发与构建工具 | 8.0.10 |
-| [Ant Design Vue](https://www.antdv.com/) | Ant Design Vue | 4.2.6 |
-| [Element Plus](https://element-plus.org/zh-CN/) | Element Plus | 2.14.1 |
-| [Naive UI](https://www.naiveui.com/) | Naive UI | 2.44.1 |
-| [TDesign](https://tdesign.tencent.com/) | TDesign | 1.20.0 |
-| [TypeScript](https://www.typescriptlang.org/docs/) | JavaScript 超集 | 6.0.3 |
-| [pinia](https://pinia.vuejs.org/) | Vue 存储库替代 vuex5 | 3.0.4 |
-| [vueuse](https://vueuse.org/) | 常用工具集 | 14.3.0 |
-| [vue-i18n](https://kazupon.github.io/vue-i18n/zh/introduction.html/) | 国际化 | 11.4.4 |
-| [vue-router](https://router.vuejs.org/) | Vue 路由 | 5.1.0 |
-| [Tailwind CSS](https://tailwindcss.com/) | 原子 CSS | 4.3.0 |
-| [Iconify](https://iconify.design/) | 图标组件 | 5.0.1 |
-| [Iconify](https://icon-sets.iconify.design/) | 在线图标库 | 2.2.481 |
-| [TinyMCE](https://www.tiny.cloud/) | 富文本编辑器 | 7.3.0 |
-| [Echarts](https://echarts.apache.org/) | 图表库 | 6.1.0 |
-| [axios](https://axios-http.com/) | http客户端 | 1.16.1 |
-| [dayjs](https://day.js.org/) | 日期处理库 | 1.11.21 |
-| [vee-validate](https://vee-validate.logaretm.com/) | 表单验证 | 4.15.1 |
-| [zod](https://zod.dev/) | 数据验证 | 3.25.76 |
+| [Vue](https://cn.vuejs.org/) | 前端框架 | 3.5.40 |
+| [Vite](https://cn.vitejs.dev/) | 开发与构建工具 | 8.2.2 |
+| [TypeScript](https://www.typescriptlang.org/) | JavaScript 超集 | 6.0.3 |
+| [Ant Design Vue](https://www.antdv.com/) | UI 组件库（**主应用**） | 4.2.6 |
+| [Element Plus](https://element-plus.org/zh-CN/) | UI 组件库（备选） | 2.14.3 |
+| [Naive UI](https://www.naiveui.com/) | UI 组件库（备选） | 2.44.1 |
+| [TDesign](https://tdesign.tencent.com/) | UI 组件库（备选） | 1.20.3 |
+| [Pinia](https://pinia.vuejs.org/) | 状态管理 | 4.0.2 |
+| [Vue Router](https://router.vuejs.org/) | 路由 | 5.2.0 |
+| [Vue I18n](https://vue-i18n.intlify.dev/) | 国际化 | 11.4.7 |
+| [Tailwind CSS](https://tailwindcss.com/) | 原子化 CSS | 4.3.3 |
+| [Iconify](https://icon-sets.iconify.design/) | 图标 | 5.0.1 |
+| [pnpm](https://pnpm.io/) + [Turborepo](https://turbo.build/) | 包管理 / 任务编排 | pnpm 11.16.0 |
 
+**环境要求**：Node `^22.18.0 || ^24.12.0`、pnpm `>= 11.0.0`。
+
+## 仓库结构
+
+```
+bidox-ui/                       # pnpm workspace + turbo monorepo
+├── apps/                       # 各 UI 技术栈的应用（每个都能独立启动）
+│   ├── web-antd/               # ★ 主应用（Ant Design Vue）
+│   ├── web-antdv-next/         # Ant Design Vue Next 版本
+│   ├── web-ele/                # Element Plus 版本
+│   ├── web-naive/              # Naive UI 版本
+│   └── web-tdesign/            # TDesign 版本
+├── packages/                   # 共享包
+│   ├── @core/                  # 核心：base / ui-kit / forward
+│   ├── effects/                # 业务组件（layouts / common-ui / plugins）
+│   ├── constants/  icons/  locales/  preferences/  stores/  styles/  types/  utils/
+├── internal/                   # 内部工具与 lint 配置
+├── docs/                       # VitePress 文档站
+├── scripts/                    # 构建 / 发布脚本（vsh、turbo-run 等）
+├── playground/                 # 组件调试场
+└── pnpm-workspace.yaml         # workspace 与依赖 catalog
+```
+
+## 应用清单
+
+| 应用 | UI 库 | 开发端口 | 说明 |
+| --- | --- | --- | --- |
+| **`web-antd`** | Ant Design Vue | **5666** | ★ 主应用，实际使用 |
+| `web-ele` | Element Plus | 5777 | 备选 |
+| `web-naive` | Naive UI | 5888 | 备选 |
+| `web-antdv-next` | Ant Design Vue Next | 5999 | 备选 |
+| `web-tdesign` | TDesign | 5999 | 备选 |
+
+所有应用标题均为「数牛智标」。**当前只有 `web-antd` 在维护和使用**，其余为上游保留的备选模板（已按同一标准收敛：`web-antd` / `web-ele` / `web-antdv-next` 三个完整克隆体均清掉遗留页面，`web-naive` / `web-tdesign` 本身就很干净，未做删改）。
+
+## 快速开始
+
+```bash
+# 1. 安装依赖（仓库根目录执行）
+pnpm install
+
+# 2. 启动主应用
+pnpm dev:antd          # 等价于 pnpm -F @vben/web-antd run dev
+```
+
+启动后访问 **http://localhost:5666/**，默认账号 **admin / admin123**。
+
+> ⚠️ **不要用根目录的 `pnpm dev`**：它走 `turbo-run dev` 交互式选择器，在非交互终端（脚本 / CI）里会一直等待输入。指定应用请用 `pnpm dev:antd` 或 `pnpm -F @vben/web-antd run dev`。
+
+### 后端对接
+
+主应用的接口配置在 `apps/web-antd/.env.development`，代理规则在 `apps/web-antd/vite.config.ts`：
+
+| 配置项 | 值 |
+| --- | --- |
+| `VITE_PORT` | `5666` |
+| `VITE_BASE_URL` | `http://127.0.0.1:48080` |
+| `VITE_GLOB_API_URL` | `/admin-api` |
+| 代理规则 | `/admin-api` → `http://localhost:48080/admin-api`（`changeOrigin: true`，`ws: true`） |
+
+因此启动前端前，需要先启动后端 `bidox-service`（端口 48080）。
+
+### 菜单与路由机制（重要）
+
+前端 **不自带菜单**。`apps/web-antd/src/preferences.ts` 中 `accessMode: 'backend'`，菜单与路由由后端 `system_menu` 表下发：
+
+```
+后端 GET /admin-api/system/auth/get-permission-info
+        │
+        ▼
+accessStore.accessMenus  ──►  src/router/access.ts
+        │                      convertServerMenuToRouteRecordStringComponent()
+        ▼
+按 component 路径在 src/views/**/*.vue 中匹配页面组件
+```
+
+**含义**：后端菜单里有什么，侧边栏就显示什么。目前后端 `system_menu` 已精简至 198 条（仅「系统管理」+「基础设施」）。
+
+`src/views/` 已按此收敛，只保留菜单可达的目录：
+
+```
+src/views/
+├── _core/          # 登录 / 认证等无 Layout 页面
+├── dashboard/      # 首页（概览 / 分析页 / 工作台）
+├── infra/          # 基础设施
+└── system/         # 系统管理
+```
+
+`src/router/routes/modules/` 下同样只保留 `dashboard.ts` / `infra.ts` / `system.ts`，在当前 `backend` 模式下不参与菜单生成（菜单以后端下发为准）。
+
+## 当前进展
+
+### ✅ 已完成
+
+- **框架搭建**：基于 vben-admin v5.7.0，pnpm workspace + turbo monorepo 结构完整，依赖可正常安装与启动
+- **主应用确定**：以 `web-antd`（Ant Design Vue）为唯一主应用，应用标题改为「数牛智标」
+- **后端对接**：接口前缀 `/admin-api` 代理至 `bidox-service`(48080)，登录链路已打通（登录 + `get-permission-info` 均正常）
+- **登录页精简**：`packages/effects/common-ui/src/ui/authentication/login.vue` 中移除未启用的第三方登录入口与死代码
+- **存量残留清理**：按后端菜单（系统管理 + 基础设施）收敛前端代码，删除 16 个不可达模块的存量页面
+  - `web-antd` 的 `src/views/` 从 **2358 → 216** 个文件，仅保留 `_core` / `dashboard` / `infra` / `system`；`web-ele`、`web-antdv-next` 同构处理（各 2357 / 2358 → 216）
+  - 同步清理 `src/router/routes/modules/` 下 13 个静态路由模块 + `routes/external/pms.ts`
+  - 同步清理 `src/api/` 下 15 个业务接口目录（保留 `core` / `infra` / `system`）
+  - 删除 `src/store/mall/`（客服会话，`#/api/mall` 已随 api 目录移除）
+  - 修复 `src/layouts/basic.vue` 对 `#/views/fms/...`（账套切换组件）的 import 与模板引用
+  - 移除 `locales/langs/{zh-CN,en-US}/page.json` 中已无引用的 `mp` 文案块
+- **修复 3 类遗留运行时 bug**（在 `系统管理` 在用页面中，均为上游 API 变更未跟进所致）：
+  - `views/system/area/data.ts`：Zod 4 已移除 `z.string().ip()`，原写法运行时直接抛 `TypeError: z.string(...).ip is not a function`；改为 `z.union([z.ipv4(), z.ipv6()], { message })`
+  - `views/system/dict/data.ts`：vben 5.7 起 `componentProps` 回调改传**上下文对象**（表单值在 `rootValues`），旧写法 `values.id` 恒为 `undefined`，导致「编辑时禁用字典类型」失效；改为 `({ rootValues }) => ...`
+  - 3 个 Modal（`dept` / `user` 的 `select-modal`、`social/user` 的 `detail`）：`useVbenModal` 未传 data 泛型，`modalApi.getData()` 被推断为 `{}`；补上 `useVbenModal<{...}>()` 泛型
+
+  上述 3 类 bug 在 `web-antd` / `web-ele` / `web-antdv-next` 中同构存在，均已修复。
+
+  修复后 **`pnpm check:type` 全仓通过（5 个 app 全部 0 错误）**，提交钩子不再需要 `--no-verify`。
+
+### ⬜ 未开始
+
+- **BidOx 业务页面**：当前无任何招投标业务页面（招标项目、评分点、标书生成、审核等均未开发），`src/api/` 与 `src/views/` 下无 BidOx 业务代码
+- **知识库 / 项目库页面**：企业知识匹配相关界面待建
+- **AI 交互界面**：与 `bixox-ai` 服务对接的解析进度、生成结果、证据溯源等界面待建
+
+### ⚠️ 待处理
+
+- **⚠️ 依赖安装的坑**：若 `apps/*/node_modules` 缺失，会出现 `vue-tsc` 报 `TS2688: Cannot find type definition file for '@vben/types/global'`、`vite build` 报 `[sass] Can't find stylesheet to import @vben/styles/global`。**根 `pnpm install --frozen-lockfile` 会误报 "Already up to date" 且不补齐**，须用 `pnpm install --filter @vben/web-antd` 这类带 filter 的命令才会真正生成 app 级 `node_modules`。
+- **pre-commit 钩子较重**：`oxlint` / `oxfmt` / `eslint` / `stylelint` + 全量 `pnpm check:type`（约 5 分钟），需 `NODE_OPTIONS=--max-old-space-size=8192` 避免 OOM。
+- **备选应用未安装依赖**：`web-ele` / `web-naive` / `web-antdv-next` / `web-tdesign` 仍保留上游代码，但其 `node_modules` 未安装且不在维护范围，暂不可用。
+
+## 常用命令
+
+| 命令 | 说明 |
+| --- | --- |
+| `pnpm install` | 安装依赖 |
+| `pnpm dev:antd` | 启动主应用（5666） |
+| `pnpm dev:ele` / `dev:naive` / `dev:tdesign` | 启动其他备选应用 |
+| `pnpm build:antd` | 构建主应用 |
+| `pnpm build` | 构建全部（turbo） |
+| `pnpm lint` | 代码检查（vsh） |
+| `pnpm format` | 代码格式化 |
+| `pnpm check:type` | 类型检查（turbo typecheck） |
+| `pnpm test:unit` | 单元测试（vitest） |
+| `pnpm dev:docs` | 启动文档站 |
+
+## 相关项目
+
+| 项目 | 路径 | 职责 | 端口 |
+| --- | --- | --- | --- |
+| **bidox-ui** | `frontend/bidox-ui` | 前端管理后台（本仓库） | 5666 |
+| **bidox-service** | `backend/bidox-service` | Web 端管理后台服务（Java / Spring Boot） | 48080 |
+| **bixox-ai** | `ai-service/bixox-ai` | AI 服务（FastAPI，解析 / 向量化 / RAG / 生成） | 8000 |
+
+## 开源协议
+
+基于 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin)（MIT License）二次开发。

@@ -19,7 +19,9 @@ const [Descriptions] = useDescription({
   schema: useDetailSchema(),
 });
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<{
+  id?: number;
+}>({
   title: $t('ui.actionTitle.detail'),
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {

@@ -33,10 +33,12 @@ export function useTypeFormSchema(): VbenFormSchema[] {
       fieldName: 'type',
       label: '字典类型',
       component: 'Input',
-      componentProps: (values) => {
+      // 注意：vben 5.7 起 componentProps 回调接收的是上下文对象，
+      // 表单完整值在 rootValues 上（旧版本直接传 values），否则 id 恒为 undefined。
+      componentProps: ({ rootValues }) => {
         return {
           placeholder: '请输入字典类型',
-          disabled: !!values.id,
+          disabled: !!rootValues?.id,
         };
       },
       rules: 'required',
@@ -185,13 +187,13 @@ export function useDataFormSchema(): VbenFormSchema[] {
       fieldName: 'dictType',
       label: '字典类型',
       component: 'ApiSelect',
-      componentProps: (values) => {
+      componentProps: ({ rootValues }) => {
         return {
           api: getSimpleDictTypeList,
           placeholder: '请输入字典类型',
           labelField: 'name',
           valueField: 'type',
-          disabled: !!values.id,
+          disabled: !!rootValues?.id,
         };
       },
       rules: 'required',

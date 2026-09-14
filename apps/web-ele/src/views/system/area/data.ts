@@ -14,7 +14,8 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入 IP 地址',
       },
-      rules: z.string().ip({ message: '请输入正确的 IP 地址' }),
+      // 注意：Zod 4 已移除 z.string().ip()，IP 校验改为顶层 z.ipv4() / z.ipv6()
+      rules: z.union([z.ipv4(), z.ipv6()], { message: '请输入正确的 IP 地址' }),
     },
     {
       fieldName: 'result',
