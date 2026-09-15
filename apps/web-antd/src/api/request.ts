@@ -18,7 +18,7 @@ import { message } from 'ant-design-vue';
 
 import { useAuthStore } from '#/store';
 
-import { refreshTokenApi } from './core';
+import { refreshAccessToken } from './auth-session';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const tenantEnable = isTenantEnable();
@@ -50,21 +50,19 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
   /**
    * 刷新token逻辑
+   *
+   * add by bidox：实际刷新动作委托给 `#/api/auth-session` 的 single-flight 实现，
+   * 与 SSE（原生 fetch，不走拦截器）**共用同一个 in-flight Promise**。
+   *
+   * 为什么不各自刷新：后端刷新会**轮换** refreshToken。两条独立路径并发刷新时，
+   * 后发的那个会带着已被轮换掉的旧 refreshToken，直接被判为无效 —— 用户表现为
+   * 「普通接口正常，一开问答就掉登录」。
+   *
+   * 失败时的语义与改造前一致：抛异常 → `authenticateResponseInterceptor` 捕获后
+   * 调用 `doReAuthenticate()`（弹登录过期框或直接登出）。
    */
   async function doRefreshToken() {
-    const accessStore = useAccessStore();
-    const refreshToken = accessStore.refreshToken as string;
-    if (!refreshToken) {
-      throw new Error('Refresh token is null!');
-    }
-    const resp = await refreshTokenApi(refreshToken);
-    const newToken = resp?.data?.data?.accessToken;
-    // add by bidox：这里一定要抛出 resp.data，从而触发 authenticateResponseInterceptor 中，刷新令牌失败！！！
-    if (!newToken) {
-      throw resp.data;
-    }
-    accessStore.setAccessToken(newToken);
-    return newToken;
+    return await refreshAccessToken();
   }
 
   function formatToken(token: null | string) {

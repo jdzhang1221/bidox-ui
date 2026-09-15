@@ -39,6 +39,12 @@ const INFRA_DICT = {
   INFRA_OPERATE_TYPE: 'infra_operate_type',
 } as const;
 
+/** ========== BID - BidOx 智能投标模块 ========== */
+const BID_DICT = {
+  BID_PARSE_STATUS: 'bid_parse_status', // 文档解析状态
+  BID_DOCUMENT_TYPE: 'bid_document_type', // 投标文档类型
+} as const;
+
 /** ========== BPM - 工作流模块 ========== */
 const BPM_DICT = {
   BPM_MODEL_FORM_TYPE: 'bpm_model_form_type', // BPM 模型表单类型
@@ -375,6 +381,7 @@ const PMS_DICT = {
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,
+  ...BID_DICT,
   ...BPM_DICT,
   ...CRM_DICT,
   ...ERP_DICT,
