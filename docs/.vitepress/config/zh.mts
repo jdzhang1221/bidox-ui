@@ -5,7 +5,7 @@ import { defineConfig } from 'vitepress';
 import { version } from '../../../package.json';
 
 export const zh = defineConfig({
-  description: 'Vben Admin & 企业级管理系统框架',
+  description: 'BidOx UI 前端框架文档（基于 Vben Admin 二次开发）',
   lang: 'zh-Hans',
   themeConfig: {
     darkModeSwitchLabel: '主题',
@@ -15,13 +15,12 @@ export const zh = defineConfig({
       prev: '上一页',
     },
     editLink: {
-      pattern:
-        'https://github.com/vbenjs/vue-vben-admin/edit/main/docs/src/:path',
+      pattern: 'https://github.com/jdzhang1221/bidox-ui/edit/main/docs/:path',
       text: '在 GitHub 上编辑此页面',
     },
     footer: {
-      copyright: `Copyright © 2020-${new Date().getFullYear()} Vben`,
-      message: '基于 MIT 许可发布.',
+      copyright: `Copyright © 2026-${new Date().getFullYear()} BidOx`,
+      message: '基于 MIT 许可发布，上游为 Vben Admin.',
     },
     langMenuLabel: '多语言',
     lastUpdated: {

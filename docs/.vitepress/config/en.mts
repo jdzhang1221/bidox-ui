@@ -5,7 +5,7 @@ import { defineConfig } from 'vitepress';
 import { version } from '../../../package.json';
 
 export const en = defineConfig({
-  description: 'Vben Admin & Enterprise level management system framework',
+  description: 'BidOx UI framework docs (forked from Vben Admin)',
   lang: 'en-US',
   themeConfig: {
     darkModeSwitchLabel: 'Theme',
@@ -15,13 +15,12 @@ export const en = defineConfig({
       prev: 'Previous Page',
     },
     editLink: {
-      pattern:
-        'https://github.com/vbenjs/vue-vben-admin/edit/main/docs/src/:path',
+      pattern: 'https://github.com/jdzhang1221/bidox-ui/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
     },
     footer: {
-      copyright: `Copyright © 2020-${new Date().getFullYear()} Vben`,
-      message: 'Released under the MIT License.',
+      copyright: `Copyright © 2026-${new Date().getFullYear()} BidOx`,
+      message: 'Released under the MIT License. Upstream: Vben Admin.',
     },
     langMenuLabel: 'Language',
     lastUpdated: {

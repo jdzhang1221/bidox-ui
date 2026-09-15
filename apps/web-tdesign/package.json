@@ -1,18 +1,17 @@
 {
   "name": "@vben/web-tdesign",
   "version": "5.7.0",
-  "homepage": "https://vben.pro",
-  "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
+  "homepage": "https://github.com/jdzhang1221/bidox-ui",
+  "bugs": "https://github.com/jdzhang1221/bidox-ui/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vbenjs/vue-vben-admin.git",
+    "url": "git+https://github.com/jdzhang1221/bidox-ui.git",
     "directory": "apps/web-tdesign"
   },
   "license": "MIT",
   "author": {
-    "name": "vben",
-    "email": "ann.vben@gmail.com",
-    "url": "https://github.com/anncwb"
+    "name": "bidox",
+    "url": "https://github.com/jdzhang1221/bidox-ui"
   },
   "type": "module",
   "scripts": {

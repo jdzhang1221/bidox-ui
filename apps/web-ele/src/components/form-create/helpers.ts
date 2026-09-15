@@ -23,7 +23,7 @@ import {
 
 /** 编码表单 Conf */
 export function encodeConf(designerRef: any) {
-  // 关联案例：https://gitee.com/yudaocode/yudao-ui-admin-vue3/pulls/834/
+  // 与下方 decodeConf 的 formCreate.parseJson 必须成对使用，否则反序列化会失败
   return formCreate.toJson(designerRef.value.getOption());
 }
 

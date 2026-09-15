@@ -45,12 +45,12 @@ export const shared = defineConfig({
       },
       provider: 'local',
     },
-    siteTitle: 'Vben Admin',
+    siteTitle: 'BidOx UI',
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vbenjs/vue-vben-admin' },
+      { icon: 'github', link: 'https://github.com/jdzhang1221/bidox-ui' },
     ],
   },
-  title: 'Vben Admin',
+  title: 'BidOx UI',
   vite: {
     build: {
       chunkSizeWarningLimit: Infinity,
@@ -126,11 +126,11 @@ export const shared = defineConfig({
 
 function head(): HeadConfig[] {
   return [
-    ['meta', { content: 'Vbenjs Team', name: 'author' }],
+    ['meta', { content: 'BidOx', name: 'author' }],
     [
       'meta',
       {
-        content: 'vben, vitejs, vite, shadcn-ui, vue',
+        content: 'bidox, vben, vitejs, vite, vue',
         name: 'keywords',
       },
     ],
@@ -143,7 +143,7 @@ function head(): HeadConfig[] {
         name: 'viewport',
       },
     ],
-    ['meta', { content: 'vben admin docs', name: 'keywords' }],
+    ['meta', { content: 'bidox ui docs', name: 'keywords' }],
     ['link', { href: '/favicon.ico', rel: 'icon' }],
     // [
     //   'script',
@@ -158,8 +158,7 @@ function pwa(): PwaOptions {
   return {
     includeManifestIcons: false,
     manifest: {
-      description:
-        'Vben Admin is a modern admin dashboard template based on Vue 3. ',
+      description: 'BidOx UI 前端框架文档（基于 Vben Admin 二次开发）',
       icons: [
         {
           sizes: '192x192',
@@ -173,8 +172,8 @@ function pwa(): PwaOptions {
         },
       ],
       id: '/',
-      name: 'Vben Admin Doc',
-      short_name: 'vben_admin_doc',
+      name: 'BidOx UI Doc',
+      short_name: 'bidox_ui_doc',
       theme_color: '#ffffff',
     },
     outDir: resolve(process.cwd(), '.vitepress/dist'),
