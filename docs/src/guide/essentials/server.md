@@ -369,6 +369,12 @@ async function doRefreshToken() {
 
 :::
 
+::: warning 本仓库已移除 Mock 服务
+
+BidOx 前端已删除 `apps/backend-mock`，并关闭了 Nitro Mock（`VITE_NITRO_MOCK=false`），所有接口直连后端服务。**本章节仅作为上游模板能力的说明保留**，当前仓库中不存在 Mock 服务。
+
+:::
+
 Mock 数据是前端开发过程中必不可少的一环，是分离前后端开发的关键链路。通过预先跟服务器端约定好的接口，模拟请求数据甚至逻辑，能够让前端开发独立自主，不会被服务端的开发进程所阻塞。
 
 项目使用 [Nitro](https://nitro.build/) 来进行本地 mock 数据处理。其原理是本地额外启动一个后端服务，是一个真实的后端服务，可以处理请求，返回数据。

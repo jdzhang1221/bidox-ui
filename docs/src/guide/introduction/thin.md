@@ -6,6 +6,12 @@ outline: deep
 
 从 `5.0` 版本开始，我们不再提供精简的仓库或者分支。我们的目标是提供一个更加一致的开发体验，同时减少维护成本。在这里，我们将如何介绍自己的项目，如何去精简以及移除不需要的功能。
 
+::: tip 本仓库现状
+
+**BidOx 前端已完成精简：`apps/` 下只保留 `web-antdv-next` 一个应用**（`web-antd` / `web-ele` / `web-naive` / `web-tdesign` / `playground` / `backend-mock` 均已移除）。本章保留作为「如何精简」的参考，实际可用命令请以根目录 `package.json` 为准。
+
+:::
+
 ## 应用精简
 
 首先，确认你需要的 `UI` 组件库版本，然后删除对应的应用，比如你选择使用 `Ant Design Vue`，那么你可以删除其他应用， 只需要删除下面两个文件夹即可：
@@ -56,17 +62,10 @@ pnpm install
 ```json
 {
   "scripts": {
-    "build:antd": "pnpm run build --filter=@vben/web-antd",
+    "build:antdv-next": "pnpm run build --filter=@vben/web-antdv-next",
     "build:docs": "pnpm run build --filter=@vben/docs",
-    "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:naive": "pnpm run build --filter=@vben/web-naive",
-    "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
-    "build:play": "pnpm run build --filter=@vben/playground",
-    "dev:antd": "pnpm -F @vben/web-antd run dev",
-    "dev:docs": "pnpm -F @vben/docs run dev",
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    "dev:play": "pnpm -F @vben/playground run dev",
-    "dev:naive": "pnpm -F @vben/web-naive run dev"
+    "dev:antdv-next": "pnpm -F @vben/web-antdv-next run dev",
+    "dev:docs": "pnpm -F @vben/docs run dev"
   }
 }
 ```

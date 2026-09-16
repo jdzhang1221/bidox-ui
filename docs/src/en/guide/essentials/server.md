@@ -338,6 +338,12 @@ The new version no longer supports mock in the production environment. Please us
 
 :::
 
+::: warning Mock service removed in this repository
+
+The BidOx frontend has deleted `apps/backend-mock` and disabled Nitro Mock (`VITE_NITRO_MOCK=false`), so all requests go straight to the backend service. **This chapter is kept only to document the upstream template capability**; no mock service exists in the current repository.
+
+:::
+
 Mock data is an indispensable part of frontend development, serving as a key link in separating frontend and backend development. By agreeing on interfaces with the server side in advance and simulating request data and even logic, frontend development can proceed independently, without being blocked by the backend development process.
 
 The project uses [Nitro](https://nitro.build/) for local mock data processing. The principle is to start an additional backend service locally, which is a real backend service that can handle requests and return data.

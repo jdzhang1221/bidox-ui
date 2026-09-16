@@ -2,13 +2,19 @@
 
 Starting from version `5.0`, we no longer provide slimmed-down repositories or branches. Our goal is to offer a more consistent development experience while reducing maintenance costs. Here’s how we introduce our project, slim down, and remove unnecessary features.
 
+::: tip Current state of this repository
+
+**The BidOx frontend has already been slimmed down: `apps/` keeps only `web-antdv-next`** (`web-antd` / `web-ele` / `web-naive` / `web-tdesign` / `playground` / `backend-mock` have all been removed). This chapter is kept as a reference for *how to* slim down; for the commands actually available, refer to the root `package.json`.
+
+:::
+
 ## Application Slimming
 
 First, identify the version of the `UI` component library you need, and then delete the corresponding applications. For example, if you choose to use `Ant Design Vue`, you can delete the other applications. Simply remove the following two folders:
 
 ```bash
 apps/web-ele
-apps/web-native
+apps/web-naive
 
 ```
 
@@ -52,17 +58,10 @@ After slimming down, you may need to adjust commands according to your project. 
 ```json
 {
   "scripts": {
-    "build:antd": "pnpm run build --filter=@vben/web-antd",
+    "build:antdv-next": "pnpm run build --filter=@vben/web-antdv-next",
     "build:docs": "pnpm run build --filter=@vben/docs",
-    "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:naive": "pnpm run build --filter=@vben/web-naive",
-    "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
-    "build:play": "pnpm run build --filter=@vben/playground",
-    "dev:antd": "pnpm -F @vben/web-antd run dev",
-    "dev:docs": "pnpm -F @vben/docs run dev",
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    "dev:play": "pnpm -F @vben/playground run dev",
-    "dev:naive": "pnpm -F @vben/web-naive run dev"
+    "dev:antdv-next": "pnpm -F @vben/web-antdv-next run dev",
+    "dev:docs": "pnpm -F @vben/docs run dev"
   }
 }
 ```

@@ -75,22 +75,10 @@ The project only supports using `pnpm` for installing dependencies. By default, 
 Execute the following command to run the project:
 
 ```bash
-# Start the project
-pnpm dev
+# Start the frontend app
+pnpm dev:antdv-next
 ```
 
-You will see an output similar to the following, allowing you to select the project you want to run:
+> This repository has been converged to a single app (`web-antdv-next` under `apps/`), so there is no longer an interactive project selector.
 
-```bash
-│
-◆  Select the app you need to run [dev]:
-│  ● @vben/web-antd
-│  ○ @vben/web-antdv-next
-│  ○ @vben/web-ele
-│  ○ @vben/web-naive
-│  ○ @vben/docs
-│  ○ @vben/playground
-└
-```
-
-Now, you can visit `http://localhost:5555` in your browser to view the project.
+Now, you can visit `http://localhost:5999` in your browser to view the project.

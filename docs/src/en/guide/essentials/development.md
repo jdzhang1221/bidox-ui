@@ -52,20 +52,10 @@ The execution command is: `pnpm run [script]` or `npm run [script]`.
     "build:analyze": "turbo build:analyze",
     // Build a local Docker image
     "build:docker": "./scripts/deploy/build-local-docker-image.sh",
-    // Build the web-antd application separately
-    "build:antd": "pnpm run build --filter=@vben/web-antd",
     // Build the web-antdv-next application separately
     "build:antdv-next": "pnpm run build --filter=@vben/web-antdv-next",
     // Build the documentation separately
     "build:docs": "pnpm run build --filter=@vben/docs",
-    // Build the web-ele application separately
-    "build:ele": "pnpm run build --filter=@vben/web-ele",
-    // Build the web-naive application separately
-    "build:naive": "pnpm run build --filter=@vben/web-naive",
-    // Build the web-tdesign application separately
-    "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
-    // Build the playground application separately
-    "build:play": "pnpm run build --filter=@vben/playground",
     // Changeset version management
     "changeset": "pnpm exec changeset",
     // Check for various issues in the project
@@ -84,20 +74,10 @@ The execution command is: `pnpm run [script]` or `npm run [script]`.
     "commit": "czg",
     // Start the project (by default, the dev scripts of all packages in the entire repository will run)
     "dev": "turbo-run dev",
-    // Start the web-antd application
-    "dev:antd": "pnpm -F @vben/web-antd run dev",
     // Start the web-antdv-next application
     "dev:antdv-next": "pnpm -F @vben/web-antdv-next run dev",
     // Start the documentation
     "dev:docs": "pnpm -F @vben/docs run dev",
-    // Start the web-ele application
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    // Start the web-naive application
-    "dev:naive": "pnpm -F @vben/web-naive run dev",
-    // Start the web-tdesign application
-    "dev:tdesign": "pnpm -F @vben/web-tdesign run dev",
-    // Start the playground application
-    "dev:play": "pnpm -F @vben/playground run dev",
     // Format code
     "format": "vsh lint --format",
     // Lint code
@@ -128,42 +108,18 @@ The execution command is: `pnpm run [script]` or `npm run [script]`.
 
 ## Running the Project Locally
 
-To run the documentation locally and make adjustments, you can execute the following command. This command allows you to select the application you want to develop:
-
-```bash
-pnpm dev
-```
-
-If you want to run a specific application directly, you can execute the following commands:
-
-To run the `web-antd` application:
-
-```bash
-pnpm dev:antd
-```
-
-To run the `web-antdv-next` application:
+To run the frontend application locally, execute the following command. Since this repository has been converged to a single app, just start `web-antdv-next` directly:
 
 ```bash
 pnpm dev:antdv-next
 ```
 
-To run the `web-naive` application:
+If you want to run another application, you can execute the following commands:
+
+To run the `web-antdv-next` application (the only frontend app left after convergence):
 
 ```bash
-pnpm dev:naive
-```
-
-To run the `web-ele` application:
-
-```bash
-pnpm dev:ele
-```
-
-To run the `web-tdesign` application:
-
-```bash
-pnpm dev:tdesign
+pnpm dev:antdv-next
 ```
 
 To run the `docs` application:
@@ -178,9 +134,9 @@ In actual business development, multiple environments are usually distinguished 
 
 At this point, you can modify three files and add corresponding script configurations to distinguish between production environments.
 
-Take the addition of the test environment `test` to `@vben/web-antd` as an example:
+Take the addition of the test environment `test` to `@vben/web-antdv-next` as an example:
 
-- `apps\web-antd\package.json`
+- `apps\web-antdv-next\package.json`
 
 ```json
 "scripts": {
@@ -201,8 +157,8 @@ Add the command `"build:test"` and change the original `"build"` to `"build:prod
 "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 turbo build",
     "build:analyze": "turbo build:analyze",
-    "build:antd": "pnpm run build --filter=@vben/web-antd",
-    "build-test:antd": "pnpm run build --filter=@vben/web-antd build:test",
+    "build:antdv-next": "pnpm run build --filter=@vben/web-antdv-next",
+    "build-test:antdv-next": "pnpm run build --filter=@vben/web-antdv-next build:test",
 
     ······
 }
@@ -224,12 +180,12 @@ Add the command to build the test environment in the root directory `package.jso
       ]
     },
 
-    "build-test:antd": {
-      "dependsOn": ["@vben/web-antd#build:test"],
+    "build-test:antdv-next": {
+      "dependsOn": ["@vben/web-antdv-next#build:test"],
       "outputs": ["dist/**"]
     },
 
-    "@vben/web-antd#build:test": {
+    "@vben/web-antdv-next#build:test": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },

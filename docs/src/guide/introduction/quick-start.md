@@ -79,34 +79,18 @@ pnpm install
 执行以下命令运行项目:
 
 ```bash
-# 启动项目
-pnpm dev
+# 启动前端应用
+pnpm dev:antdv-next
 ```
 
-此时，你会看到类似如下的输出，选择你需要运行的项目：
+> 本仓库已收敛为单应用（`apps/` 下仅 `web-antdv-next`），无需再交互式选择项目。
 
-```bash
-│
-◆  Select the app you need to run [dev]:
-│  ● @vben/web-antd
-│  ○ @vben/web-antdv-next
-│  ○ @vben/web-ele
-│  ○ @vben/web-naive
-│  ○ @vben/docs
-│  ● @vben/playground
-└
-```
-
-现在，你可以在浏览器访问 `http://localhost:5555` 查看项目。
+现在，你可以在浏览器访问 `http://localhost:5999` 查看项目。
 
 #### 运行指定项目
 
-如果你不想选择项目，可以直接运行以下命令运行你需要的应用：
+如需运行文档站：
 
 ```bash
-pnpm run dev:antd
-pnpm run dev:ele
-pnpm run dev:naive
 pnpm run dev:docs
-pnpm run dev:play
 ```
