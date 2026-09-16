@@ -43,7 +43,7 @@ export function useFormSchema(): VbenFormSchema[] {
         valueField: 'id',
         placeholder: '请选择租户套餐',
       },
-      rules: 'required',
+      rules: 'selectRequired',
     },
     {
       fieldName: 'contactName',
