@@ -6,7 +6,7 @@ import type { InfraDataSourceConfigApi } from '#/api/infra/data-source-config';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
@@ -194,22 +194,6 @@ initDataSourceConfig();
 </script>
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="代码生成（单表）"
-        url="https://doc.iocoder.cn/new-feature/"
-      />
-      <DocAlert
-        title="代码生成（树表）"
-        url="https://doc.iocoder.cn/new-feature/tree/"
-      />
-      <DocAlert
-        title="代码生成（主子表）"
-        url="https://doc.iocoder.cn/new-feature/master-sub/"
-      />
-      <DocAlert title="单元测试" url="https://doc.iocoder.cn/unit-test/" />
-    </template>
-
     <ImportModal @success="handleRefresh" />
     <PreviewModal />
     <Grid table-title="代码生成列表">
