@@ -112,6 +112,9 @@ export function useAssignDataPermissionFormSchema(): VbenFormSchema[] {
       fieldName: 'dataScopeDeptIds',
       label: '部门范围',
       component: 'Input',
+      // 同 menuIds：插槽里渲染的是 Tree（defineModel -> modelValue），
+      // 不显式声明会被 form-field 删掉 modelValue 绑定，导致回显与保存双向失效。
+      modelPropName: 'modelValue',
       formItemClass: 'items-start',
       dependencies: {
         triggerFields: ['dataScope'],
@@ -154,6 +157,10 @@ export function useAssignMenuFormSchema(): VbenFormSchema[] {
       fieldName: 'menuIds',
       label: '菜单权限',
       component: 'Input',
+      // 该字段由 #menuIds 插槽渲染为 Tree，Tree 用 defineModel()（modelValue）。
+      // adapter 里 baseModelPropName 是 'value'，form-field 会把 modelValue /
+      // onUpdate:modelValue 删掉，导致回显与保存双向失效（保存会清空角色菜单）。
+      modelPropName: 'modelValue',
       formItemClass: 'items-start',
     },
   ];

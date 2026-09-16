@@ -31,6 +31,10 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'menuIds',
       label: '菜单权限',
       component: 'Input',
+      // 该字段由 #menuIds 插槽渲染为 Tree，Tree 用 defineModel()（modelValue）。
+      // adapter 里 baseModelPropName 是 'value'，form-field 会把 modelValue /
+      // onUpdate:modelValue 删掉，导致回显与保存双向失效（保存会清空套餐菜单）。
+      modelPropName: 'modelValue',
       formItemClass: 'items-start',
     },
     {

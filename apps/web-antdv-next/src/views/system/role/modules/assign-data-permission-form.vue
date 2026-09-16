@@ -1,8 +1,10 @@
 <script lang="ts" setup>
+import type { TreeExpose } from '@vben/common-ui';
+
 import type { SystemDeptApi } from '#/api/system/dept';
 import type { SystemRoleApi } from '#/api/system/role';
 
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
 import { Tree, useVbenModal } from '@vben/common-ui';
 import { SystemDataScopeEnum } from '@vben/constants';
@@ -25,7 +27,7 @@ const deptLoading = ref(false); // 加载部门列表
 const isAllSelected = ref(false); // 全选状态
 const isExpanded = ref(false); // 展开状态
 const isCheckStrictly = ref(true); // 父子联动状态
-const expandedKeys = ref<number[]>([]); // 展开的节点
+const treeRef = ref<TreeExpose>(); // 部门树实例（展开/折叠）
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -76,9 +78,12 @@ const [Modal, modalApi] = useVbenModal({
     try {
       // 加载部门列表
       await loadDeptTree();
-      handleExpandAll();
       // 设置表单值，一定要在加载树之后
       await formApi.setValues(await getRole(data.id));
+      // 部门树默认展开全部，方便选择
+      isExpanded.value = true;
+      await nextTick();
+      treeRef.value?.expandAll();
     } finally {
       modalApi.unlock();
     }
@@ -110,7 +115,13 @@ function handleSelectAll() {
 /** 展开/折叠所有节点 */
 function handleExpandAll() {
   isExpanded.value = !isExpanded.value;
-  expandedKeys.value = isExpanded.value ? getAllNodeIds(deptTree.value) : [];
+  // default-expanded-keys 只在 Tree 初始化时读一次，改它不会生效；
+  // 必须调用 Tree 暴露的方法操作内部 expanded 状态。
+  if (isExpanded.value) {
+    treeRef.value?.expandAll();
+  } else {
+    treeRef.value?.collapseAll();
+  }
 }
 
 /** 切换父子联动 */
@@ -136,10 +147,10 @@ function getAllNodeIds(nodes: any[], ids: number[] = []): number[] {
       <template #dataScopeDeptIds="slotProps">
         <Spin :spinning="deptLoading" :classes="{ root: 'w-full' }">
           <Tree
+            ref="treeRef"
             :tree-data="deptTree"
             multiple
             bordered
-            :default-expanded-keys="expandedKeys"
             v-bind="slotProps.componentProps"
             :check-strictly="!isCheckStrictly"
             value-field="id"

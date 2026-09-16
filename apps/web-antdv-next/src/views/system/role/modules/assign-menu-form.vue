@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { TreeExpose } from '@vben/common-ui';
 import type { Recordable } from '@vben/types';
 
 import type { SystemMenuApi } from '#/api/system/menu';
@@ -29,7 +30,7 @@ const menuTree = ref<SystemMenuApi.Menu[]>([]); // 菜单树
 const menuLoading = ref(false); // 加载菜单列表
 const isAllSelected = ref(false); // 全选状态
 const isExpanded = ref(false); // 展开状态
-const expandedKeys = ref<number[]>([]); // 展开的节点
+const treeRef = ref<TreeExpose>(); // 菜单树实例（展开/折叠）
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -122,7 +123,13 @@ function handleSelectAll() {
 /** 展开/折叠所有节点 */
 function handleExpandAll() {
   isExpanded.value = !isExpanded.value;
-  expandedKeys.value = isExpanded.value ? getAllNodeIds(menuTree.value) : [];
+  // default-expanded-keys 只在 Tree 初始化时读一次，改它不会生效；
+  // 必须调用 Tree 暴露的方法操作内部 expanded 状态。
+  if (isExpanded.value) {
+    treeRef.value?.expandAll();
+  } else {
+    treeRef.value?.collapseAll();
+  }
 }
 
 /** 递归获取所有节点 ID */
@@ -155,10 +162,10 @@ function getNodeClass(node: Recordable<any>) {
       <template #menuIds="slotProps">
         <Spin :spinning="menuLoading" :classes="{ root: 'w-full' }">
           <Tree
+            ref="treeRef"
             :tree-data="menuTree"
             multiple
             bordered
-            :default-expanded-keys="expandedKeys"
             :get-node-class="getNodeClass"
             v-bind="slotProps.componentProps"
             value-field="id"
