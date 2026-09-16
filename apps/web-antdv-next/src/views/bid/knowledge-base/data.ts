@@ -105,6 +105,7 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'name',
       title: '知识库名称',
+      // 变长文本列：吸收剩余宽度
       minWidth: 200,
       // 文本列左对齐，便于纵向扫读（全局默认是 center）
       align: 'left',
@@ -113,6 +114,7 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'description',
       title: '描述',
+      // 变长文本列：表单允许 1024 字，宽度给足才不会被 tooltip 兜底
       minWidth: 240,
       align: 'left',
       showOverflow: 'tooltip',
@@ -120,7 +122,9 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'status',
       title: '状态',
-      minWidth: 90,
+      // ⚠️ 原子列（枚举）必须固定宽。写 minWidth: 90 时被撑到 **194px** ——
+      // 一个两字 Tag 占掉 4 倍宽度，而真正需要宽度的「名称 / 描述」反而被压窄。
+      width: 90,
       cellRender: {
         name: 'CellDict',
         props: { type: DICT_TYPE.COMMON_STATUS },
@@ -129,12 +133,15 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'createTime',
       title: '创建时间',
-      minWidth: 170,
+      // 原子列：定长日期时间，固定宽（实测被撑到 274px）
+      width: 170,
       formatter: 'formatDateTime',
     },
     {
       title: '操作',
-      width: 140,
+      // 两个带图标的文字按钮（修改 / 删除）实测内容宽 139px，原值 140px 只剩 1px 余量，
+      // 文案或图标微调就会贴边被裁。留出安全余量。
+      width: 152,
       fixed: 'right',
       slots: { default: 'actions' },
     },

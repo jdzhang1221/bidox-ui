@@ -169,12 +169,15 @@ export function useGridColumns(): VxeTableGridOptions<BidDocumentApi.Document>['
     {
       field: 'documentType',
       title: '文档类型',
-      minWidth: 110,
+      // 原子列（枚举）：固定宽。写 minWidth 会被 vxe 按剩余空间撑大 —— 实测
+      // 声明 120 却占 156px，而多出来的宽度本该给下面的文本列。
+      width: 110,
       formatter: ({ cellValue }) => documentTypeText[cellValue] ?? cellValue,
     },
     {
       field: '_knowledgeBaseName',
       title: '知识库',
+      // 变长文本列：吸收剩余宽度（原先 176px 会把「MVP服务联调知识库-20260914」截断）
       minWidth: 130,
       align: 'left',
       showOverflow: 'tooltip',
@@ -183,86 +186,99 @@ export function useGridColumns(): VxeTableGridOptions<BidDocumentApi.Document>['
     {
       field: '_parseStatus',
       title: '解析状态',
-      minWidth: 100,
+      // 原子列：只放一个 Tag，固定宽
+      width: 100,
       slots: { default: 'parseStatus' },
     },
     {
       field: 'createTime',
       title: '创建时间',
-      minWidth: 170,
+      // 原子列：定长日期时间，固定宽（实测被撑到 217px）
+      width: 170,
       formatter: 'formatDateTime',
     },
     {
       title: '操作',
-      // ⚠️ 必须 ≥248px：三个带图标的文字按钮（开始解析 / 解析日志 / 删除）实测内容宽 236px，
+      // ⚠️ 必须 ≥271px：三个带图标的文字按钮（开始解析 / 解析日志 / 删除）实测内容宽 259px，
       // 原值 220px 会让「删除」越过表格右边界被 overflow:hidden 裁掉，用户看不到。
-      width: 260,
+      // 这里留 13px 余量，避免文案或图标微调后再次贴边。
+      width: 272,
       fixed: 'right',
       slots: { default: 'actions' },
     },
   ];
 }
 
-/** 解析日志列表字段 */
+/**
+ * 解析日志列表字段。
+ *
+ * ⚠️ 这里是**唯一**必须用固定 `width` 的表：抽屉容器最窄、列数最多。
+ * 全部写 `minWidth` 时 11 列合计 1300px，而抽屉只有 520px —— 实测用户
+ * 只能看到前 5 列，「错误信息」要横向滚过 6 列才看得到（解析失败时最需要它）。
+ *
+ * 两条收敛原则：
+ * 1. **原子列一律固定宽**（次数 / 状态 / 解析器 / 各项计数 / 耗时 / 时间）。
+ *    它们是枚举或定长数字，宽度不该随容器伸缩；只有「错误信息」是变长文本，
+ *    用 `minWidth` 吸收剩余宽度。
+ * 2. **删掉「结束时间」**。它等于 `开始时间 + 耗时`，属纯派生值；
+ *    留着会多占 180px 并再次把表格挤出抽屉。需要精确起止时看开始时间与耗时即可。
+ */
 export function useParseLogColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'attemptNo',
       title: '解析次数',
-      minWidth: 80,
+      width: 84,
     },
     {
       field: 'status',
       title: '状态',
-      minWidth: 100,
+      width: 92,
       slots: { default: 'logStatus' },
     },
     {
       field: 'parser',
       title: '解析器',
-      minWidth: 100,
+      width: 92,
+      align: 'left',
     },
     {
       field: 'blockCount',
       title: 'Block 数',
-      minWidth: 90,
+      width: 86,
     },
     {
       field: 'sectionCount',
       title: 'Section 数',
-      minWidth: 90,
+      width: 92,
     },
     {
       field: 'chunkCount',
       title: 'Chunk 数',
-      minWidth: 90,
+      width: 88,
     },
     {
       field: 'patternCount',
       title: 'Pattern 数',
-      minWidth: 90,
+      width: 92,
     },
     {
       field: 'duration',
       title: '耗时(ms)',
-      minWidth: 100,
+      width: 96,
     },
     {
       field: 'beginTime',
       title: '开始时间',
-      minWidth: 180,
-      formatter: 'formatDateTime',
-    },
-    {
-      field: 'endTime',
-      title: '结束时间',
-      minWidth: 180,
+      width: 168,
       formatter: 'formatDateTime',
     },
     {
       field: 'errorMessage',
       title: '错误信息',
-      minWidth: 200,
+      // 唯一变长列：吸收剩余宽度，超出用 tooltip 展示
+      minWidth: 220,
+      align: 'left',
       showOverflow: 'tooltip',
     },
   ];

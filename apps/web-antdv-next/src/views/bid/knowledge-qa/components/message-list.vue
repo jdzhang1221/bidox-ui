@@ -67,6 +67,16 @@ function recalledCountOf(message: ChatMessage): number {
   return sourceViewByKey.value.get(message.key)?.recalledCount ?? 0;
 }
 
+/**
+ * 该消息的来源是否**真的**按引用收敛过。
+ *
+ * `false` = 答案正文没有任何 `[来源N]`，`sourceEntries` 是全量兜底。
+ * 必须透传给 SourceList 换文案，否则「未找到依据」的回答也会写「引用来源 6 条」。
+ */
+function isSourceFiltered(message: ChatMessage): boolean {
+  return sourceViewByKey.value.get(message.key)?.filtered ?? true;
+}
+
 /** 助手行仍是 GENERATING */
 function isPending(message: ChatMessage): boolean {
   return message.role === 'assistant' && message.status === 0;
@@ -78,6 +88,26 @@ function isFailed(message: ChatMessage): boolean {
 
 function isCancelled(message: ChatMessage): boolean {
   return message.role === 'assistant' && message.status === 3;
+}
+
+/**
+ * 「只有状态说明、没有正文」的气泡。
+ *
+ * 气泡默认 `flex: 1` 撑满整行 —— 对 Markdown 正文是对的，但对
+ * 「已停止生成」这 5 个字，会画出一个 1000px 宽、里面只有一行小字的空框。
+ * 这类气泡改为按内容收缩。
+ *
+ * 两个例外必须保持整行宽：
+ * - 失败态：红色告警框要占满才醒目；
+ * - 带来源列表：`SourceList` 内部是列表 + 卡片，被挤到几百像素会散架。
+ */
+function isNoteOnly(message: ChatMessage): boolean {
+  return (
+    message.role === 'assistant' &&
+    !message.content &&
+    !isFailed(message) &&
+    sourceEntries(message).length === 0
+  );
 }
 
 function failedText(message: ChatMessage): string {
@@ -132,7 +162,10 @@ function activeIndexFor(message: ChatMessage): number | undefined {
 
       <div
         class="qa-message__bubble"
-        :class="{ 'is-error': isFailed(message) }"
+        :class="{
+          'is-error': isFailed(message),
+          'is-note': isNoteOnly(message),
+        }"
       >
         <!-- 用户消息：纯文本回显 -->
         <p v-if="message.role === 'user'" class="qa-message__plain">
@@ -181,6 +214,7 @@ function activeIndexFor(message: ChatMessage): number | undefined {
             v-if="sourceEntries(message).length > 0"
             :active-index="activeIndexFor(message)"
             :entries="sourceEntries(message)"
+            :filtered="isSourceFiltered(message)"
             :recalled-count="recalledCountOf(message)"
           />
         </template>
@@ -281,6 +315,14 @@ function activeIndexFor(message: ChatMessage): number | undefined {
 .qa-message--assistant .qa-message__bubble.is-error {
   background: hsl(var(--destructive) / 8%);
   border: 1px solid hsl(var(--destructive) / 30%);
+}
+
+/**
+ * 只有状态说明（「已停止生成」/「连接已断开」/ 生成中的点点点）时按内容收缩，
+ * 不要画一个整行宽的空框。见 `isNoteOnly` 的两个例外。
+ */
+.qa-message--assistant .qa-message__bubble.is-note {
+  flex: 0 1 auto;
 }
 
 .qa-message__plain {

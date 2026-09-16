@@ -35,6 +35,16 @@ const props = withDefaults(
     defaultExpanded?: boolean;
     /** 要展示的条目（已按「被引用」收敛，带原始编号） */
     entries?: CitedSourceEntry[];
+    /**
+     * 是否**真的**按引用收敛过，来自 `resolveCitedSources().filtered`。
+     *
+     * `false` 表示答案正文里没有任何可识别的 `[来源N]`（模型整段没标注），
+     * 此时 `entries` 是**全量兜底**而不是「被引用的来源」。
+     * 实测过一轮：「未找到相关依据」的回答召回 6 条、正文零标注，
+     * 而标题仍写「引用来源 6 条」——等于告诉用户这 6 条就是答案的依据。
+     * 必须换文案，见 `citation.ts` 的规则 2。
+     */
+    filtered?: boolean;
     /** 本轮检索召回的条数，用于说明「为什么不是全部」 */
     recalledCount?: number;
   }>(),
@@ -42,6 +52,7 @@ const props = withDefaults(
     activeIndex: undefined,
     defaultExpanded: false,
     entries: () => [],
+    filtered: true,
     recalledCount: 0,
   },
 );
@@ -71,24 +82,72 @@ function displayName(source: BidKnowledgeQaApi.Source): string {
     : `文档 #${source.documentId}`;
 }
 
+/**
+ * 标题文案。
+ *
+ * 未收敛时（答案没标注引用）不能说「引用来源」—— 那 6 条只是检索召回，
+ * 正文一条都没引。改成「检索到的来源」并补一句说明，避免误导。
+ */
+const toggleLabel = computed(() =>
+  props.filtered
+    ? `引用来源 ${items.value.length} 条`
+    : `检索到的来源 ${items.value.length} 条`,
+);
+
+/**
+ * 页码标签。
+ *
+ * ⚠️ 必须把 `<= 0` 当成「未知」而不是页码 0。
+ * Python 侧 `DocumentBuilder._page` 的初始值就是 **0**（`app/document/ast/builder.py:21`），
+ * 只有 PDF 解析器才会 `set_page(page_no)`（从 1 开始）；而上传入口只收 `.docx`，
+ * 于是 docx 文档的 `pageStart/pageEnd` 恒为 0 —— 界面上会一直显示无意义的「P0」。
+ */
 function pageLabel(source: BidKnowledgeQaApi.Source): string {
-  const { pageEnd, pageStart } = source;
-  if (
-    (pageStart === undefined || pageStart === null) &&
-    (pageEnd === undefined || pageEnd === null)
-  ) {
+  const start = toPageNumber(source.pageStart);
+  const end = toPageNumber(source.pageEnd);
+  if (start === null && end === null) {
     return '';
   }
-  if (
-    pageStart !== undefined &&
-    pageStart !== null &&
-    pageEnd !== undefined &&
-    pageEnd !== null &&
-    pageStart !== pageEnd
-  ) {
-    return `P${pageStart}–P${pageEnd}`;
+  if (start !== null && end !== null && start !== end) {
+    return `P${start}–P${end}`;
   }
-  return `P${pageStart ?? pageEnd}`;
+  return `P${start ?? end}`;
+}
+
+/** 页码归一化：非正数（0 / 负数）视为「未知」，返回 null */
+function toPageNumber(value: null | number | undefined): null | number {
+  return typeof value === 'number' && value > 0 ? value : null;
+}
+
+/**
+ * 片段折叠阈值（字符数）。
+ *
+ * snippet 是上游切块的**原文**，实测最长 500 字，且常含 Markdown 表格；
+ * 用 `white-space: pre-wrap` 渲染后单个片段能撑到 **693px** 高，
+ * 6 条来源就是两千多像素的滚动墙。超过阈值时默认折叠为 3 行 + 「展开全文」。
+ */
+const SNIPPET_CLAMP_CHARS = 160;
+
+function needsSnippetToggle(snippet: null | string | undefined): boolean {
+  return (snippet?.length ?? 0) > SNIPPET_CLAMP_CHARS;
+}
+
+/** 已展开全文的片段（按原始证据编号记录） */
+const expandedSnippets = ref<Set<number>>(new Set());
+
+function isSnippetExpanded(index: number): boolean {
+  return expandedSnippets.value.has(index);
+}
+
+function toggleSnippet(index: number): void {
+  // 换新 Set 而不是原地 mutate：`ref` 的 Set 原地改不会触发更新
+  const next = new Set(expandedSnippets.value);
+  if (next.has(index)) {
+    next.delete(index);
+  } else {
+    next.add(index);
+  }
+  expandedSnippets.value = next;
 }
 
 /**
@@ -177,11 +236,15 @@ onBeforeUnmount(() => {
       @click="expanded = !expanded"
     >
       <span class="qa-sources__caret">{{ expanded ? '▾' : '▸' }}</span>
-      引用来源 {{ items.length }} 条
+      {{ toggleLabel }}
     </button>
     <!-- 说明「为什么不是全部」，避免用户以为来源丢了 -->
     <span v-if="hasHidden" class="qa-sources__recalled">
       （检索召回 {{ recalledCount }} 条，仅显示被答案引用的）
+    </span>
+    <!-- 未收敛：答案正文没标注引用，这里是全量兜底，必须说清楚 -->
+    <span v-else-if="!filtered" class="qa-sources__recalled">
+      （答案未标注引用，此处为全部召回结果）
     </span>
     <ol v-show="expanded" class="qa-sources__list">
       <li
@@ -216,9 +279,18 @@ onBeforeUnmount(() => {
         <!-- eslint-disable vue/no-v-html -->
         <p
           class="qa-sources__snippet"
+          :class="{ 'is-clamped': !isSnippetExpanded(entry.index) }"
           v-html="toPlainTextHtml(entry.source.snippet)"
         ></p>
         <!-- eslint-enable vue/no-v-html -->
+        <button
+          v-if="needsSnippetToggle(entry.source.snippet)"
+          class="qa-sources__snippet-toggle"
+          type="button"
+          @click="toggleSnippet(entry.index)"
+        >
+          {{ isSnippetExpanded(entry.index) ? '收起' : '展开全文' }}
+        </button>
       </li>
     </ol>
   </div>
@@ -339,5 +411,32 @@ onBeforeUnmount(() => {
   color: hsl(var(--foreground) / 80%);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+/**
+ * 折叠态：只留 3 行（3 × 1.6em）。
+ *
+ * 用 `max-height` 而不是 `-webkit-line-clamp`：片段带 `white-space: pre-wrap`，
+ * line-clamp 需要 `display: -webkit-box`，两者叠加在部分内核上会把换行压成一行。
+ * `em` 相对自身 font-size（12px），3 行 = 4.8em = 57.6px。
+ */
+.qa-sources__snippet.is-clamped {
+  max-height: 4.8em;
+  overflow: hidden;
+}
+
+/* 折叠提示：小号主色链接，跟在片段末尾 */
+.qa-sources__snippet-toggle {
+  padding: 0;
+  margin-top: 2px;
+  font-size: 11px;
+  color: hsl(var(--primary));
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.qa-sources__snippet-toggle:hover {
+  text-decoration: underline;
 }
 </style>

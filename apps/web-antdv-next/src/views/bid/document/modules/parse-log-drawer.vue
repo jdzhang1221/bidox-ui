@@ -49,6 +49,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
+  /**
+   * ⚠️ 必须显式指定宽度。默认抽屉只有 **520px**，而解析日志表有 10 列、
+   * 固定宽合计约 890px（+「错误信息」minWidth 220）—— 实测默认宽度下
+   * 用户只能看到前 5 列，「错误信息」要横向滚过 6 列才够得着，
+   * 而它恰恰是解析失败时最需要看的一列。
+   *
+   * 1160px 是按列宽实测取的：正文区扣掉左右内边距后可用 1119px，
+   * 刚好容下 10 列（合计 1110px），横向滚动为 0。`max-w-[94vw]` 保证小屏不溢出视口。
+   */
+  class: 'w-[1160px] max-w-[94vw]',
   onOpenChange(isOpen: boolean) {
     if (!isOpen) {
       documentId.value = undefined;
