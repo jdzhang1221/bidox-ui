@@ -213,6 +213,7 @@ pnpm dev:antdv-next    # 等价于 pnpm -F @vben/web-antdv-next run dev
 - **业务模块迁移**：`views/bid`（19 文件）、`api/bid`（3 文件）、`api/auth-session.ts`（545 行，SSE 与 axios 共用的单飞 token 刷新）、`components/markdown-view`（整体替换原死代码）迁入 `web-antdv-next`；包名 `ant-design-vue` → `antdv-next`（10 个文件）
 - **删除 4 个应用**：`web-antd` / `web-ele` / `web-naive` / `web-tdesign`（共 1653 个受跟踪文件），`pnpm-lock.yaml` 同步剔除 4 个 importer
 - **配套清理**：`package.json` 脚本、`.vscode/launch.json`、`.github/workflows/ci.yml` 中的对应条目
+- **共享包与配置收敛**：删除 `packages/styles/src/{antd,ele,naive}` 三个已无引用的样式入口及其 `exports`；清理 `pnpm-workspace.yaml` 的 `catalog` 中 9 个零使用条目（`ant-design-vue`、`@form-create/ant-design-vue`、`element-plus`、`@form-create/element-ui`、`naive-ui`、`@form-create/naive-ui`、`tdesign-vue-next`、`@form-create/designer`、`unplugin-element-plus`），catalog 209 → 200 条
 - **验证**：`vue-tsc` 0 错误、90/90 单测通过、`pnpm build:antdv-next` 生产构建 11/11 成功、Playwright 端到端 6/6 通过且控制台 0 错误（覆盖登录 → 知识库增删 → 文档列表 → 问答 SSE 流式 + 引用角标跳转）
 
 > `antdv-next` 与 `ant-design-vue` 4.x 有两处 API 差异需注意：`notification({ message })` 改为 `notification({ title })`；表单 `rules: 'selectRequired'` 改为 `rules: 'required'`。
@@ -230,8 +231,6 @@ pnpm dev:antdv-next    # 等价于 pnpm -F @vben/web-antdv-next run dev
 | **2 个既有单测失败** | `pnpm test:unit` 退出码非 0 | `packages/stores/src/modules/user.test.ts`（清空 userInfo 用例）与 `packages/effects/common-ui/src/components/tree/__tests__/tree.test.ts`（半选父节点去重用例）。与 BidOx 业务无关，属上游遗留，尚未修 |
 | **`.env.production` 曾硬编码 localhost** | 生产构建后接口指向本机 | 已改为相对路径 `/admin-api`；正式部署仍需按环境注入 `VITE_BASE_URL` |
 | **百度统计仍用上游 key** | 统计会打到上游账号 | `apps/web-antdv-next/.env` 的 `VITE_APP_BAIDU_CODE` 待替换或置空 |
-| **`packages/styles` 残留 3 个无引用的样式入口** | 无 | `packages/styles/src/{antd,ele,naive}` 及其 `exports` 已无任何消费方（随 `web-antd` / `web-ele` / `web-naive` 删除而失效）。属上游共享包，暂未删 |
-| **`pnpm-workspace.yaml` 的 catalog 有失效条目** | 无 | `ant-design-vue`、`@form-create/ant-design-vue`、`element-plus`、`@form-create/element-ui`、`naive-ui`、`@form-create/naive-ui`、`tdesign-vue-next` 等已无消费方，留着无害，暂未清 |
 | **文档站 `docs/` 仍是 Vben 框架文档** | 无 | 站点标题 / 描述 / 版权已改为 BidOx 口径，正文内容仍是 Vben 框架文档（对二次开发有参考价值） |
 | **`helpers.ts` 保留一条上游 PR 链接** | 无 | `components/form-create/helpers.ts` 里的 `gitee.com/yudaocode/.../pulls/834`，属外部公开技术溯源，不影响产品 |
 | **改 `internal/vite-config/src` 后必须重建** | 改动不生效 | 应用消费的是 `dist/index.mjs`，源码改动后需 `pnpm --filter @vben/vite-config run stub` |
