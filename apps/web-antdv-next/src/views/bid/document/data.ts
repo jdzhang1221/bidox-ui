@@ -154,41 +154,49 @@ export function useGridColumns(): VxeTableGridOptions<BidDocumentApi.Document>['
     {
       field: 'id',
       title: '编号',
-      minWidth: 80,
+      // ⚠️ 固定宽度（不是 minWidth）：minWidth 会被 vxe 按剩余空间撑大，
+      // 既浪费横向空间，又会把「操作」列挤出可视区。编号只需容纳 4 位数。
+      width: 72,
     },
     {
       field: 'displayName',
       title: '文档名称',
       minWidth: 200,
+      // 文本列左对齐，便于纵向扫读（表格全局默认 align 为 center）
+      align: 'left',
       showOverflow: 'tooltip',
     },
     {
       field: 'documentType',
       title: '文档类型',
-      minWidth: 120,
+      minWidth: 110,
       formatter: ({ cellValue }) => documentTypeText[cellValue] ?? cellValue,
     },
     {
       field: '_knowledgeBaseName',
       title: '知识库',
-      minWidth: 120,
+      minWidth: 130,
+      align: 'left',
+      showOverflow: 'tooltip',
       formatter: ({ row }) => (row as any)._knowledgeBaseName ?? '-',
     },
     {
       field: '_parseStatus',
       title: '解析状态',
-      minWidth: 120,
+      minWidth: 100,
       slots: { default: 'parseStatus' },
     },
     {
       field: 'createTime',
       title: '创建时间',
-      minWidth: 180,
+      minWidth: 170,
       formatter: 'formatDateTime',
     },
     {
       title: '操作',
-      width: 220,
+      // ⚠️ 必须 ≥248px：三个带图标的文字按钮（开始解析 / 解析日志 / 删除）实测内容宽 236px，
+      // 原值 220px 会让「删除」越过表格右边界被 overflow:hidden 裁掉，用户看不到。
+      width: 260,
       fixed: 'right',
       slots: { default: 'actions' },
     },

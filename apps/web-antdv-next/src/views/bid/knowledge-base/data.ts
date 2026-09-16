@@ -30,7 +30,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'description',
       label: '知识库描述',
-      component: 'Textarea',
+      component: 'TextArea',
       componentProps: {
         placeholder: '请输入知识库描述',
         maxLength: 1024,
@@ -98,23 +98,29 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'id',
       title: '编号',
-      minWidth: 100,
+      // ⚠️ 用固定 `width` 而不是 `minWidth`：表格全局 align 为 center，vxe 会把
+      // 「minWidth 列」按剩余空间等比撑大，两位数编号实测占过 173px。固定后不再随窗口变化。
+      width: 72,
     },
     {
       field: 'name',
       title: '知识库名称',
       minWidth: 200,
+      // 文本列左对齐，便于纵向扫读（全局默认是 center）
+      align: 'left',
+      showOverflow: 'tooltip',
     },
     {
       field: 'description',
       title: '描述',
       minWidth: 240,
+      align: 'left',
       showOverflow: 'tooltip',
     },
     {
       field: 'status',
       title: '状态',
-      minWidth: 100,
+      minWidth: 90,
       cellRender: {
         name: 'CellDict',
         props: { type: DICT_TYPE.COMMON_STATUS },
@@ -123,7 +129,7 @@ export function useGridColumns(): VxeTableGridOptions<BidKnowledgeBaseApi.Knowle
     {
       field: 'createTime',
       title: '创建时间',
-      minWidth: 180,
+      minWidth: 170,
       formatter: 'formatDateTime',
     },
     {

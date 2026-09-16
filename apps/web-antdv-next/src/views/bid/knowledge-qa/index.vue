@@ -519,8 +519,19 @@ loadKnowledgeBaseOptions();
   border-bottom: 1px solid hsl(var(--border));
 }
 
-.qa-page__kb {
-  width: 220px;
+/*
+ * ⚠️ 必须经 `:deep()` 从原生父级穿透，不能直接写 `.qa-page__kb { width }`。
+ *
+ * `<Select>` 是组件，scoped 样式**不会**把 `data-v-*` 加到它的根节点上（实测根节点
+ * class 里只有 antd 自己的类），所以直写等于死代码 —— 选择框退化成按内容自适应：
+ * 选中「全部知识库」时 112px，选中「MVP服务联调知识库-20260914」时跳到 235px，
+ * 每次换选项整个工具条都在抖。固定宽度后不再随选中项伸缩。
+ *
+ * 240px 是按最长知识库名（24 字符）实测取的值：下拉默认与触发器同宽
+ * （`popupMatchSelectWidth` 默认 true），240px 刚好能完整显示选项文字。
+ */
+.qa-page__toolbar :deep(.qa-page__kb) {
+  width: 240px;
 }
 
 .qa-page__phase {
@@ -550,7 +561,12 @@ loadKnowledgeBaseOptions();
   }
 }
 
-.qa-page__alert {
+/*
+ * 同 `.qa-page__kb`：`<Alert>` 也是组件，scoped 样式加不到它的根节点上，
+ * 直写 `.qa-page__alert { margin }` 同样是死代码（错误提示会贴着容器边缘）。
+ * 必须从原生父级 `.qa-page__main` 用 `:deep()` 穿透。
+ */
+.qa-page__main :deep(.qa-page__alert) {
   margin: 8px 16px 0;
 }
 
