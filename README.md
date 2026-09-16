@@ -231,7 +231,8 @@ pnpm dev:antdv-next    # 等价于 pnpm -F @vben/web-antdv-next run dev
 | **2 个既有单测失败** | `pnpm test:unit` 退出码非 0 | `packages/stores/src/modules/user.test.ts`（清空 userInfo 用例）与 `packages/effects/common-ui/src/components/tree/__tests__/tree.test.ts`（半选父节点去重用例）。与 BidOx 业务无关，属上游遗留，尚未修 |
 | **`.env.production` 曾硬编码 localhost** | 生产构建后接口指向本机 | 已改为相对路径 `/admin-api`；正式部署仍需按环境注入 `VITE_BASE_URL` |
 | **百度统计仍用上游 key** | 统计会打到上游账号 | `apps/web-antdv-next/.env` 的 `VITE_APP_BAIDU_CODE` 待替换或置空 |
-| **文档站 `docs/` 仍是 Vben 框架文档** | 无 | 站点标题 / 描述 / 版权已改为 BidOx 口径，正文内容仍是 Vben 框架文档（对二次开发有参考价值） |
+| **文档站 `docs/` 正文仍是 Vben 框架文档** | 无 | 站点标题 / 描述 / 版权已改为 BidOx 口径；应用结构相关章节（目录树 / 快速开始 / 开发指南 / 精简说明 / 数据 Mock）已按单应用现状对齐，其余正文仍是 Vben 框架文档（对二次开发有参考价值） |
+| **`pnpm build:docs` 偶发 exit 134** | 构建中断 | 原生 SIGABRT（多 task 并行时内存吃紧），**重跑一次即成功**。另产物 `docs/.vitepress/dist.zip` 恒为 22 字节（上游 zip 步骤在 `dist/` 填充前就打包；`dist/` 本身正常，416 文件 / 23MB） |
 | **`helpers.ts` 保留一条上游 PR 链接** | 无 | `components/form-create/helpers.ts` 里的 `gitee.com/yudaocode/.../pulls/834`，属外部公开技术溯源，不影响产品 |
 | **改 `internal/vite-config/src` 后必须重建** | 改动不生效 | 应用消费的是 `dist/index.mjs`，源码改动后需 `pnpm --filter @vben/vite-config run stub` |
 | **pre-commit 钩子较重** | 提交慢 | `oxlint` / `oxfmt` / `eslint` / `stylelint` + 全量 `pnpm check:type`，需 `NODE_OPTIONS=--max-old-space-size=8192` 避免 OOM |
