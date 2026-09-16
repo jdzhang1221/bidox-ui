@@ -67,8 +67,8 @@ jobs:
       - name: Typecheck
         run: pnpm check:type
 
-      - name: Build web-antd
-        run: pnpm build:antd
+      - name: Build web-antdv-next
+        run: pnpm build:antdv-next
 
       # From https://github.com/rhysd/actionlint/blob/main/docs/usage.md#use-actionlint-on-github-actions
       - name: Check workflow files
