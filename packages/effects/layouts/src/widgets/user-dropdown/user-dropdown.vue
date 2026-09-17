@@ -198,10 +198,20 @@ const showRefreshInDropdown = computed(
     preferences.widget.refreshButtonPosition === 'user-dropdown',
 );
 
+/**
+ * 「第二组」下拉项（全局搜索 / 主题 / 语言 / 时区 / 全屏 / 通知 / 刷新）是否有任意一个可见。
+ *
+ * 该值只用于决定模板末尾那条分隔线是否渲染（见模板
+ * `<DropdownMenuSeparator v-if="hasAnyInDropdown || preferencesButtonPosition.userDropdown" />`）。
+ *
+ * ⚠️ 不要把 showLockInDropdown / showLogoutInDropdown 算进来：锁屏与退出登录属于
+ * 「第一组」，它们各自已经带了自己的前置分隔线。若把它们算进来，当「偏好设置」入口
+ * 不可见时（例如 preferences.app.enablePreferences === false，此时
+ * preferencesButtonPosition.userDropdown 恒为 false），这条分隔线会渲染成下拉菜单的
+ * 最后一项 —— 一条悬空的分隔线。
+ */
 const hasAnyInDropdown = computed(
   () =>
-    showLockInDropdown.value ||
-    showLogoutInDropdown.value ||
     showGlobalSearchInDropdown.value ||
     showThemeToggleInDropdown.value ||
     showLanguageToggleInDropdown.value ||

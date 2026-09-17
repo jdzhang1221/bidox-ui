@@ -6,19 +6,11 @@ import type { SystemTenantApi } from '#/api/system/tenant';
 import { computed, onMounted, ref, watch } from 'vue';
 
 import { useAccess } from '@vben/access';
-import { AuthenticationLoginExpiredModal, useVbenModal } from '@vben/common-ui';
-import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@vben/constants';
+import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
 import { isTenantEnable, useTabs, useWatermark } from '@vben/hooks';
-import {
-  AntdProfileOutlined,
-  BookOpenText,
-  CircleHelp,
-  IconifyIcon,
-  SvgGithubIcon,
-} from '@vben/icons';
+import { AntdProfileOutlined } from '@vben/icons';
 import {
   BasicLayout,
-  Help,
   LockScreen,
   Notification,
   TenantDropdown,
@@ -26,9 +18,9 @@ import {
 } from '@vben/layouts';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { formatDateTime, openWindow } from '@vben/utils';
+import { formatDateTime } from '@vben/utils';
 
-import { message, Tooltip } from 'antdv-next';
+import { message } from 'antdv-next';
 
 import {
   getUnreadNotifyMessageCount,
@@ -53,11 +45,15 @@ const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 const showDot = computed(() => unreadCount.value > 0);
 
-const [HelpModal, helpModalApi] = useVbenModal({
-  connectedComponent: Help,
-});
 const { isDark } = usePreferences();
 
+/**
+ * 头像下拉菜单。
+ *
+ * 产品要求：下拉里只保留「个人中心」和「退出登录」两项
+ * （退出登录由 preferences.widget.logoutButtonPosition='user-dropdown' 渲染在菜单项之后）。
+ * 原有的「文档 / GitHub / 帮助问答」是 vben 自带的演示入口，已移除。
+ */
 const menus = computed(() => [
   {
     handler: () => {
@@ -65,31 +61,6 @@ const menus = computed(() => [
     },
     icon: AntdProfileOutlined,
     text: $t('ui.widgets.profile'),
-  },
-  {
-    handler: () => {
-      openWindow(VBEN_DOC_URL, {
-        target: '_blank',
-      });
-    },
-    icon: BookOpenText,
-    text: $t('ui.widgets.document'),
-  },
-  {
-    handler: () => {
-      openWindow(VBEN_GITHUB_URL, {
-        target: '_blank',
-      });
-    },
-    icon: SvgGithubIcon,
-    text: 'GitHub',
-  },
-  {
-    handler: () => {
-      helpModalApi.open();
-    },
-    icon: CircleHelp,
-    text: $t('ui.widgets.qa'),
   },
 ]);
 
@@ -155,12 +126,6 @@ function handleNotificationOpen(open: boolean) {
   }
   handleNotificationGetList();
   handleNotificationGetUnreadCount();
-}
-
-/** 打开 IM 聊天 */
-function handleOpenImHome() {
-  const { href } = router.resolve({ name: 'ImHome' });
-  window.open(href, '_blank');
 }
 
 // 租户列表
@@ -314,17 +279,6 @@ watch(
         />
       </div>
     </template>
-    <template #header-right-900>
-      <Tooltip title="IM 聊天">
-        <button
-          class="hover:bg-accent hover:text-accent-foreground mr-1 inline-flex size-8 items-center justify-center rounded-md transition-colors"
-          type="button"
-          @click="handleOpenImHome"
-        >
-          <IconifyIcon class="size-4" icon="lucide:message-circle" />
-        </button>
-      </Tooltip>
-    </template>
     <template #extra>
       <AuthenticationLoginExpiredModal
         v-model:open="accessStore.loginExpired"
@@ -337,5 +291,4 @@ watch(
       <LockScreen :avatar @to-login="handleLogout" />
     </template>
   </BasicLayout>
-  <HelpModal />
 </template>
