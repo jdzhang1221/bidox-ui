@@ -41,6 +41,10 @@ const INFRA_DICT = {
 const BID_DICT = {
   BID_PARSE_STATUS: 'bid_parse_status', // 文档解析状态
   BID_DOCUMENT_TYPE: 'bid_document_type', // 投标文档类型
+  BID_AI_MODEL_PROVIDER: 'bid_ai_model_provider', // AI 模型提供方
+  // 注：`bid_ai_model_status`（AI 模型状态）已随 v2.1 的字段合并删除 ——
+  //     列表的「状态」列改为直接按 `enabled`（1 启用 / 0 未启用）渲染，
+  //     不再走字典。字典类型与字典项已在 SQL 里物理删除，别再加回来。
 } as const;
 
 /** 字典类型枚举 - 统一导出 */
