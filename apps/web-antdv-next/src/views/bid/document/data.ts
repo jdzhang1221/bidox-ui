@@ -60,8 +60,16 @@ export function useUploadFormSchema(): VbenFormSchema[] {
       fieldName: 'knowledgeBaseId',
       label: '知识库',
       component: 'ApiSelect',
-      // ApiComponent 自身 v-model 名为 modelValue；不显式声明会导致表单收不到回写值
-      modelPropName: 'modelValue',
+      // ⚠️ 必须是 'value'，**不能**写 'modelValue'。
+      // ApiSelect 是 `withDefaultPlaceholder(ApiComponent, 'select', { modelPropName: 'value' })`
+      // 包装出来的：适配层把 modelPropName 传成 'value' 后，ApiComponent 内
+      // `usesDefaultModelValue`（`['model-value','modelValue'].includes(...)`）为 false，
+      // 取值与回写**只走 attrs 的 value / onUpdate:value 通道**，defineModel() 那条被旁路。
+      // 写成 'modelValue' 的后果：表单的值进 defineModel，组件却读 attrs.value（undefined），
+      // 用户选择后回写又去调不存在的 attrs['onUpdate:value'] → **选择结果静默丢失**，
+      // 字段永远是 undefined。antd Select 对 value=undefined 会退回内部非受控态，
+      // 所以 UI 上「看起来选中了」，点确认却报「请选择知识库」。
+      modelPropName: 'value',
       componentProps: {
         api: getKnowledgeBaseSimpleList,
         labelField: 'name',
@@ -102,8 +110,8 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'knowledgeBaseId',
       label: '知识库',
       component: 'ApiSelect',
-      // 同上：显式声明 modelValue，保证搜索表单能正确回写
-      modelPropName: 'modelValue',
+      // 同上：ApiSelect 的对外 v-model 名是 'value'（见上传表单处的详细说明）
+      modelPropName: 'value',
       componentProps: {
         api: getKnowledgeBaseSimpleList,
         labelField: 'name',

@@ -36,8 +36,18 @@ beforeAll(() => {
  *
  * ## 修复
  *
- * 显式声明 `modelPropName: 'modelValue'`（与 `views/bid/document/data.ts`
- * 里 `ApiSelect` 的写法一致）。这里把契约锁死，防止后续重构又把它删掉。
+ * 显式声明 `modelPropName: 'modelValue'`。这里把契约锁死，防止后续重构又把它删掉。
+ *
+ * ⚠️ 这条规则**只适用于「插槽渲染 defineModel 组件」**的场景（本文件的两个字段
+ * 都是 `component: 'Input'` + `#<fieldName>` 插槽放 `Tree`）。
+ * 适配层组件（`ApiSelect` / `ApiTreeSelect` / `ApiCascader`）恰好相反：它们经
+ * `withDefaultPlaceholder` 包装后，对外的 v-model 名是 **`value`**，
+ * 写成 `'modelValue'` 反而会静默断链（值进 defineModel，组件却读 attrs.value）。
+ * 见 `views/bid/document/__tests__/api-select-model-prop.test.ts`。
+ *
+ * 判断口诀：**看真正接收 v-model 的那个组件是谁**
+ * —— 是插槽里的原生/defineModel 组件 → `'modelValue'`；
+ * —— 是 adapter 里注册的 `ApiXxx` → `'value'`。
  *
  * ## 机制本身在哪测
  *
