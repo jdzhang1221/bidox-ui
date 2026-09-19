@@ -99,6 +99,16 @@ export interface QaStreamHandlers {
    * 页面直接覆盖即可，不需要自己拼接（拼接逻辑只能有一份，否则重放/合并时必然错位）。
    */
   onContent?: (content: string, messageId: null | number) => void;
+  /**
+   * 思考链增量（模型的 reasoning）。
+   *
+   * ⚠️ 与 {@link onContent} 不同，这里传的是**增量**而不是全文：思考链只用于展示，
+   * 页面自己累积即可 —— 它绝不能与正文共用同一份拼接逻辑，否则两者会串味。
+   *
+   * 为什么值得展示：思考链占上游「等首 token」段的 **81%**（实测 31.2s / 38.4s），
+   * 而它**早于正文**产出。此前整条丢弃，用户在那 30 多秒里看不到任何进展。
+   */
+  onReasoning?: (delta: string, messageId: null | number) => void;
   onMeta?: (meta: QaMetaPayload) => void;
   /**
    * 对账结果。`phase` 会同步更新；页面据此修正消息状态。
@@ -195,6 +205,13 @@ export function useKnowledgeQaStream(options: UseKnowledgeQaStreamOptions) {
    *
    * **不发终态**：这是「被打断」而不是「有结论」。卸载、切会话、切租户都走这里，
    * 页面会在下一次挂载时从服务端重新拉消息，那里的状态才是权威。
+   *
+   * ⚠️ 但**必须把 `phase` 复位**：`activeAttempt = null` 之后，帧循环会在
+   * `!isCurrent(attempt)` 处直接 `return`（见 `start` 里的 for-await），abort 分支
+   * 也直接 `return`（「终态由 stop()/invalidate() 负责，这里不是失败」）——
+   * **两条路径都不落终态**。于是 `phase` 会永久停在 `connecting`/`generating`，
+   * 页面 `streaming` 恒为 `true`，工具栏的「生成中…」在用户切走再切回后一直挂着，
+   * 直到下一次提问才消失。复位成 `idle`（=「当前没有 attempt」）才是实情。
    */
   function invalidate(): void {
     const attempt = activeAttempt;
@@ -202,6 +219,8 @@ export function useKnowledgeQaStream(options: UseKnowledgeQaStreamOptions) {
     clearFlushTimer();
     buffer = '';
     emittedLength = 0;
+    // 只复位相位，**不调** `options.onTerminal` —— 那会伪造一个「有结论」的终态
+    phase.value = 'idle';
     if (attempt) {
       try {
         attempt.controller.abort();
@@ -414,6 +433,14 @@ export function useKnowledgeQaStream(options: UseKnowledgeQaStreamOptions) {
         activeMessageId.value = meta.messageId;
         phase.value = 'generating';
         options.onMeta?.(meta);
+        break;
+      }
+      case 'reasoning': {
+        // 载荷结构与 delta 相同（都是 `content` 字段），直接复用类型。
+        // ⚠️ 刻意**不做 seq 校验**：思考链只用于展示，丢一帧不该把整个问答判成协议错误。
+        // 正文那一路才必须严格校验 —— 缺口会让答案「看起来通顺但缺内容」，比直接失败更危险。
+        const reasoning = payload as unknown as QaDeltaPayload;
+        options.onReasoning?.(reasoning.content ?? '', attempt.messageId);
         break;
       }
       case 'sources': {

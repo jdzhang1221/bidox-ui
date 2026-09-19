@@ -26,6 +26,14 @@ export interface ChatMessage {
   id: null | number;
   /** 本地唯一键，永不变 */
   key: string;
+  /**
+   * 思考链（模型的 reasoning），**仅本次流式期间展示用**。
+   *
+   * 它不落库、也不随历史消息回来 —— 所以从 `message/list` 载入的历史消息永远是空的。
+   * 与 `content` 严格分离：`content` 是答案正文（带 `[来源N]` 引用），两者绝不能拼接，
+   * 否则引用编号会错位。
+   */
+  reasoning?: string;
   /** user / assistant */
   role: string;
   sources?: BidKnowledgeQaApi.Source[];

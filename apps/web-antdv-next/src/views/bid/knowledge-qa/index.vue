@@ -3,7 +3,15 @@ import type { ChatMessage } from './types';
 
 import type { BidKnowledgeQaApi } from '#/api/bid/knowledge-qa';
 
-import { computed, nextTick, onActivated, onDeactivated, ref } from 'vue';
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onDeactivated,
+  onUnmounted,
+  ref,
+  watch,
+} from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -92,6 +100,18 @@ const {
   scrollToBottom,
 } = useChatScroll(scrollRef);
 
+/**
+ * 本次 attempt 已检索到的证据条数（来自 `event: sources`）。
+ *
+ * `null` 表示 sources 还没到。之所以要单独存一份而不是从消息上读：
+ * 工具栏的相位提示是**全局**的，而 `message.sources` 属于某一条消息，
+ * 用户在生成期间切换会话时就取不准了。
+ */
+const phaseSourceCount = ref<null | number>(null);
+/** 本次 attempt 已等待的秒数，仅用于相位提示 */
+const elapsedSeconds = ref(0);
+let elapsedTimer: null | ReturnType<typeof setInterval> = null;
+
 const stream = useKnowledgeQaStream({
   // 会话切换时我们会显式 invalidate()，这里再校验一次「流所属会话仍是当前会话」。
   // 两道防线的理由：invalidate 覆盖的是「我们知道的切换」，而这里覆盖的是
@@ -104,6 +124,20 @@ const stream = useKnowledgeQaStream({
       return;
     }
     message.content = content;
+    followIfNearBottom();
+  },
+
+  onReasoning(delta) {
+    const message = findMessage(activeAssistantKey);
+    if (!message) {
+      return;
+    }
+    // ⚠️ 思考链传的是**增量**，而 `onContent` 传的是全文 —— 拼接语义不同，
+    // 所以在这里自己累积，绝不与正文共用同一份逻辑（共用必然串味）。
+    //
+    // 这段的价值在**感知**：实测首个思考分片在 prefill 后（约 7s）就到，
+    // 而首正文 token 要等约 38s —— 中间那 30s 里它是页面上唯一在动的东西。
+    message.reasoning = (message.reasoning ?? '') + delta;
     followIfNearBottom();
   },
 
@@ -145,6 +179,10 @@ const stream = useKnowledgeQaStream({
   },
 
   onSources(sources) {
+    // 证据条数在这里才有值 —— 它是「生成阶段」唯一真实可信的进展信号。
+    // Java 只在收到 AI 的 meta 时才发 meta + sources（KnowledgeQaStreamServiceImpl
+    // .onMeta），所以 sources 一到就说明检索已结束、LLM 正在生成。
+    phaseSourceCount.value = sources.length;
     const message = findMessage(activeAssistantKey);
     if (message) {
       message.sources = sources;
@@ -189,6 +227,71 @@ const streaming = computed(
   () =>
     stream.phase.value === 'connecting' || stream.phase.value === 'generating',
 );
+
+/**
+ * 工具栏相位提示。
+ *
+ * 为什么必须分相位：`connecting` 覆盖的是**整段检索** —— Java 只在收到 AI 的 `meta`
+ * 时才把 meta + sources 转发下来（`KnowledgeQaStreamServiceImpl.onMeta`），
+ * 而 AI 是先同步检索完才发 meta 的，所以实测这段有 22~30s
+ * （embedding + 向量/关键词检索 + rerank + 章节子树扩展）；
+ * `generating` 才是 LLM 首 token + 流式输出（实测首 token 7~45s）。
+ * 两个相位原来共用一句「生成中…」，用户在**最长的那一段**里得不到任何进展信号。
+ *
+ * 秒数不是装饰：30s 级的等待里，一个在动的数字比静态文案更能压住「是不是卡死了」。
+ */
+const phaseHint = computed(() => {
+  const phase = stream.phase.value;
+  if (phase === 'connecting') {
+    return '正在检索知识库…';
+  }
+  if (phase !== 'generating') {
+    return '';
+  }
+  const count = phaseSourceCount.value;
+  if (count === null) {
+    return '正在生成答案…';
+  }
+  if (count === 0) {
+    // 0 条本身是有用信息：答案多半会说「现有知识库中未找到依据」
+    return '未检索到证据，正在生成…';
+  }
+  return `已找到 ${count} 条证据，正在生成…`;
+});
+
+function stopElapsedTimer(): void {
+  if (elapsedTimer !== null) {
+    clearInterval(elapsedTimer);
+    elapsedTimer = null;
+  }
+}
+
+/**
+ * 相位进入「流式中」时启停计时器。
+ *
+ * `connecting → generating` 时**不能重置**（那是同一次 attempt 的相位推进，
+ * 秒数要连续），只在「非流式 → 流式」这一跳上清零重启。
+ *
+ * 依赖 `invalidate()` 会把相位复位成 `idle`：否则切走会话后 `streaming` 一直是 `true`，
+ * 这个 watch 不会触发，计时器就会挂在那里空转。
+ */
+watch(streaming, (active, wasActive) => {
+  if (!active) {
+    stopElapsedTimer();
+    elapsedSeconds.value = 0;
+    return;
+  }
+  if (wasActive) {
+    return;
+  }
+  elapsedSeconds.value = 0;
+  elapsedTimer = setInterval(() => {
+    elapsedSeconds.value += 1;
+  }, 1000);
+});
+
+// KeepAlive 组件被真正卸载时（关闭标签页等）必须清掉，否则计时器会一直跑
+onUnmounted(stopElapsedTimer);
 
 const knowledgeBaseId = computed<null | number>(() =>
   kbSelection.value === 'all' ? null : Number(kbSelection.value),
@@ -343,6 +446,8 @@ async function handleSend(question: string): Promise<void> {
   if (kbState.value !== 'ready') {
     return;
   }
+  // 上一轮的证据条数不能带到这一轮：否则新问题在检索期间就会显示旧条数
+  phaseSourceCount.value = null;
   const clientRequestId = createUuid();
   const userKey = createMessageKey();
   const assistantKey = createMessageKey();
@@ -435,7 +540,8 @@ loadKnowledgeBaseOptions();
           </template>
           <span v-if="streaming" class="qa-page__phase">
             <span class="qa-page__phase-dot"></span>
-            生成中…
+            {{ phaseHint }}
+            <span class="qa-page__phase-elapsed">{{ elapsedSeconds }}s</span>
           </span>
         </header>
 
@@ -548,6 +654,15 @@ loadKnowledgeBaseOptions();
   background: hsl(var(--primary));
   border-radius: 50%;
   animation: qa-phase-pulse 1.2s ease-in-out infinite;
+}
+
+/*
+ * 秒数必须用等宽数字：比例数字下 1 比 8 窄，每秒跳动会让整行提示左右抖动。
+ * 比正文再淡一档，避免抢走相位文案的注意力。
+ */
+.qa-page__phase-elapsed {
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--muted-foreground) / 75%);
 }
 
 @keyframes qa-phase-pulse {

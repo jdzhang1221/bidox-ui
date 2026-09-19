@@ -82,6 +82,19 @@ function isPending(message: ChatMessage): boolean {
   return message.role === 'assistant' && message.status === 0;
 }
 
+/**
+ * 思考链是否默认展开。
+ *
+ * 只在「还在流式、且正文还没出现」时展开 —— 那正是用户最需要进展信号的阶段
+ * （实测这段占「等首 token」的 81%，约 31s）。正文一开始输出，思考链就让位、
+ * 收起成一行摘要，不跟答案抢注意力。
+ *
+ * 用户手动收起后不会被强行再展开：绑定值仍是 `true` 时 Vue 不会去改 DOM 上的 `open`。
+ */
+function isThinking(message: ChatMessage): boolean {
+  return props.streaming && !message.content && Boolean(message.reasoning);
+}
+
 function isFailed(message: ChatMessage): boolean {
   return message.role === 'assistant' && message.status === 2;
 }
@@ -174,6 +187,22 @@ function activeIndexFor(message: ChatMessage): number | undefined {
 
         <!-- 助手消息 -->
         <template v-else>
+          <!--
+            思考链（模型的 reasoning）。**只在本次流式期间有值** —— 它不落库，
+            所以从 `message/list` 载入的历史消息永远是空的。
+
+            必须与正文分开渲染：正文里的 `[来源N]` 是与 sources 同序的引用契约，
+            思考链混进去会让引用编号错位。
+          -->
+          <details
+            v-if="message.reasoning"
+            class="qa-message__reasoning"
+            :open="isThinking(message)"
+          >
+            <summary>思考过程</summary>
+            <p class="qa-message__reasoning-text">{{ message.reasoning }}</p>
+          </details>
+
           <!--
             `source-count` 必须传**原始召回总数**，不能传收敛后的条数：
             正文角标 `[来源N]` 的 N 是原始证据编号，越界判断只能按原始总数做。
@@ -334,6 +363,35 @@ function activeIndexFor(message: ChatMessage): number | undefined {
 .qa-message__note {
   font-size: 13px;
   color: hsl(var(--muted-foreground));
+}
+
+/**
+ * 思考链折叠区。
+ *
+ * 刻意用 muted 前景色 + 左侧细边框：它是**过程**不是结论，视觉上必须比答案轻；
+ * 但在「正文还没出来」时它又是页面上唯一在动的东西，所以默认展开、并限高滚动
+ * （实测思考链可达 5300 字，不限高会把答案挤出屏幕）。
+ */
+.qa-message__reasoning {
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+}
+
+.qa-message__reasoning > summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.qa-message__reasoning-text {
+  max-height: 180px;
+  padding-left: 10px;
+  margin: 6px 0 0;
+  overflow-y: auto;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border-left: 2px solid hsl(var(--border));
 }
 
 .qa-message__error {
