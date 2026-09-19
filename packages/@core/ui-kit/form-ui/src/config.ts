@@ -37,11 +37,30 @@ export const COMPONENT_MAP: Record<BaseFormComponentType, Component> = {
   VbenSelect,
 };
 
+/**
+ * 组件 → **非标准**模型 prop 名（`modelValue` 之外的才需要登记）。
+ *
+ * ⚠️ **不要**再给 `VbenCheckbox` 登记 `'checked'`（上游 vben 至今仍这么写，是上游 bug）。
+ *
+ * `@vben-core/shadcn-ui` 的 `checkbox.vue` 用的是**无参** `defineModel<boolean>()`，
+ * 它的模型 prop 就是 **`modelValue`**，不存在 `checked` 这个 prop；
+ * `login.vue` 的「记住我」与 `workbench-todo.vue` 也都是 `v-model` 直连。
+ *
+ * 一旦登记成 `'checked'`，`form-field` 会走
+ * `if (bindEventField !== 'modelValue') Reflect.deleteProperty(binds, 'modelValue')`，
+ * 把 `modelValue` / `onUpdate:modelValue` **删掉**、改传 `checked` / `onUpdate:checked` ——
+ * 这两个都落到 `$attrs` 上被忽略。后果是**勾选框视觉上能勾、表单值却永不更新**：
+ * 注册页勾了「我同意隐私条款」仍报「请同意隐私政策和条款」。
+ *
+ * 判定方法：勾选后在 DevTools 里看 `VbenCheckbox` 实例的 `props` ——
+ * 只有 `modelValue`，`checked` 恒为 `undefined`。
+ *
+ * ⚠️ 注意本文件是**核心包**：应用侧 `adapter/form.ts` 的 `modelPropNameMap` 修不了这个问题，
+ * 因为 `setupVbenForm` 的循环只遍历**应用注册的组件**，而 `VbenCheckbox` 不在其中。
+ */
 export const COMPONENT_BIND_EVENT_MAP: Partial<
   Record<BaseFormComponentType, string>
-> = {
-  VbenCheckbox: 'checked',
-};
+> = {};
 
 export function setupVbenForm<
   T extends BaseFormComponentType = BaseFormComponentType,
