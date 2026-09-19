@@ -50,9 +50,15 @@ const { isDark } = usePreferences();
 /**
  * 头像下拉菜单。
  *
- * 产品要求：下拉里只保留「个人中心」和「退出登录」两项
- * （退出登录由 preferences.widget.logoutButtonPosition='user-dropdown' 渲染在菜单项之后）。
+ * 产品要求：下拉里保留「个人中心」与「偏好设置」，末尾是「退出登录」——
+ * 后两项都不在这里声明，而是由偏好设置渲染在菜单项之后：
+ *   - 「偏好设置」← `preferences.preferencesButtonPosition = 'user-dropdown'`
+ *   - 「退出登录」← `preferences.widget.logoutButtonPosition = 'user-dropdown'`
+ * 两者都刻意不放右上角：偏好设置属**个人级**配置（主题/语言/字号/布局），与个人中心同类；
+ * 右上角保持「租户切换 + 通知 + 头像」的精简结构。
+ *
  * 原有的「文档 / GitHub / 帮助问答」是 vben 自带的演示入口，已移除。
+ * ⚠️ 所以这里 `menus` 只有一项是**正确**的，别看到下拉里有三项就以为漏配。
  */
 const menus = computed(() => [
   {

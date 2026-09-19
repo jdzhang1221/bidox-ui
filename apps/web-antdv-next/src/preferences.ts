@@ -13,11 +13,27 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
     /**
-     * 关闭偏好设置按钮：enablePreferences 为 false 时，
-     * preferencesButtonPosition 的 header / fixed / userDropdown 全为 false，
-     * 因此右上角的设置齿轮和头像下拉里的「偏好设置」会一并消失
+     * 偏好设置入口。
+     *
+     * `enablePreferences` 为 false 时，`preferencesButtonPosition` 的
+     * header / fixed / userDropdown **全为 false**（齿轮与下拉项一并消失）；
+     * 为 true 时按 `preferencesButtonPosition` 单选决定位置：
+     *   'header'        → 右上角设置齿轮（头像下拉里没有）
+     *   'user-dropdown' → 头像下拉里的「偏好设置」（右上角无齿轮）
+     *   'auto'          → 桌面端在头部，移动端 / 全屏时降级成右下角悬浮齿轮
+     *   'fixed'         → 永远右下角悬浮齿轮（会浮在业务内容上）
+     *   'none'          → 都不显示
+     * 详见 packages/@core/preferences/src/use-preferences.ts:205。
      */
-    enablePreferences: false,
+    enablePreferences: true,
+    /**
+     * 只放头像下拉，不在右上角出现齿轮。
+     *
+     * 理由：偏好设置（主题 / 语言 / 字号 / 布局）属**个人级**配置，与「个人中心」同类；
+     * 且右上角要保持「租户切换 + 通知 + 头像」的精简结构，不再加图标。
+     * 注意不要用 'auto' —— 移动端 / 全屏时它会变成右下角悬浮齿轮，浮在业务表格上挡操作。
+     */
+    preferencesButtonPosition: 'user-dropdown',
   },
   /**
    * 头部右侧 widget 显隐与位置。

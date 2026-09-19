@@ -201,14 +201,16 @@ const showRefreshInDropdown = computed(
 /**
  * 「第二组」下拉项（全局搜索 / 主题 / 语言 / 时区 / 全屏 / 通知 / 刷新）是否有任意一个可见。
  *
- * 该值只用于决定模板末尾那条分隔线是否渲染（见模板
- * `<DropdownMenuSeparator v-if="hasAnyInDropdown || preferencesButtonPosition.userDropdown" />`）。
+ * 该值决定第二组整块 `<template>` 是否渲染，因而也就决定了它前面那条
+ * `<DropdownMenuSeparator />` 是否出现 —— 避免在菜单末尾留下一条悬空的分隔线。
  *
  * ⚠️ 不要把 showLockInDropdown / showLogoutInDropdown 算进来：锁屏与退出登录属于
- * 「第一组」，它们各自已经带了自己的前置分隔线。若把它们算进来，当「偏好设置」入口
- * 不可见时（例如 preferences.app.enablePreferences === false，此时
- * preferencesButtonPosition.userDropdown 恒为 false），这条分隔线会渲染成下拉菜单的
- * 最后一项 —— 一条悬空的分隔线。
+ * 「第一组」（个人级动作），各自已带前置分隔线，与第二组无关。
+ *
+ * 菜单分组顺序（自 2026-09-18 起）：
+ *   ① 个人中心 → 偏好设置   （个人级配置，由 `#user-dropdown` 插槽 + 本组件渲染）
+ *   ② 锁屏 → 退出登录        （终结性动作，保持在最后）
+ *   ③ 全局搜索 / 主题 / 语言 / 时区 / 全屏 / 通知 / 刷新
  */
 const hasAnyInDropdown = computed(
   () =>
@@ -415,7 +417,9 @@ if (preferences.shortcutKeys.enable) {
             </div>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator v-if="menus?.length" />
+        <DropdownMenuSeparator
+          v-if="menus?.length || preferencesButtonPosition.userDropdown"
+        />
         <DropdownMenuItem
           v-for="menu in menus"
           :key="menu.text"
@@ -426,6 +430,20 @@ if (preferences.shortcutKeys.enable) {
             <VbenIcon :icon="menu.icon" class="size-4" />
           </VbenIconButton>
           {{ menu.text }}
+        </DropdownMenuItem>
+        <!--
+          「偏好设置」紧跟「个人中心」：两者同属个人级配置，归为一组；
+          「退出登录」是终结性动作，保持在最后。
+        -->
+        <DropdownMenuItem
+          v-if="preferencesButtonPosition.userDropdown"
+          class="mx-1 flex cursor-pointer items-center rounded-sm py-1 leading-8"
+          @click="handleOpenSettings"
+        >
+          <VbenIconButton class="mr-2" @click="handleOpenSettings">
+            <Settings class="size-4" />
+          </VbenIconButton>
+          {{ $t('preferences.title') }}
         </DropdownMenuItem>
         <template v-if="showLockInDropdown || showLogoutInDropdown">
           <DropdownMenuSeparator v-if="showLockInDropdown" />
@@ -457,17 +475,7 @@ if (preferences.shortcutKeys.enable) {
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </template>
-        <template
-          v-if="
-            showGlobalSearchInDropdown ||
-            showThemeToggleInDropdown ||
-            showLanguageToggleInDropdown ||
-            showTimezoneInDropdown ||
-            showFullscreenInDropdown ||
-            showNotificationInDropdown ||
-            showRefreshInDropdown
-          "
-        >
+        <template v-if="hasAnyInDropdown">
           <DropdownMenuSeparator />
           <DropdownMenuItem
             v-if="showGlobalSearchInDropdown"
@@ -550,19 +558,6 @@ if (preferences.shortcutKeys.enable) {
             {{ $t('preferences.widget.refresh') }}
           </DropdownMenuItem>
         </template>
-        <DropdownMenuSeparator
-          v-if="hasAnyInDropdown || preferencesButtonPosition.userDropdown"
-        />
-        <DropdownMenuItem
-          v-if="preferencesButtonPosition.userDropdown"
-          class="mx-1 flex cursor-pointer items-center rounded-sm py-1 leading-8"
-          @click="handleOpenSettings"
-        >
-          <VbenIconButton class="mr-2" @click="handleOpenSettings">
-            <Settings class="size-4" />
-          </VbenIconButton>
-          {{ $t('preferences.title') }}
-        </DropdownMenuItem>
       </div>
     </DropdownMenuContent>
   </DropdownMenu>
