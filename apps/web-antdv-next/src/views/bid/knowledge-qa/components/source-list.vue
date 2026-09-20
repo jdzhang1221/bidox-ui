@@ -5,12 +5,13 @@ import type { BidKnowledgeQaApi } from '#/api/bid/knowledge-qa';
 
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
+import { getSourceChunks } from '#/api/bid/knowledge-qa';
 import { toPlainTextHtml } from '#/components/markdown-view';
 
 /**
  * 引用来源列表
  *
- * 三个不能含糊的点：
+ * 四个不能含糊的点：
  *
  * 1. **片段按纯文本渲染**。snippet 来自「上游文档原文」，是不可信内容，
  *    走 `toPlainTextHtml` 转义后注入，绝不交给 Markdown 渲染器
@@ -21,6 +22,10 @@ import { toPlainTextHtml } from '#/components/markdown-view';
  * 3. **编号取 `entry.index`，不是数组下标**。列表只展示**被答案引用**的来源，
  *    所以编号可能是「2、4」这种不连续的原始证据编号。
  *    用下标编号会让正文 `[来源4]` 指向另一条 —— 收敛与定位必须共用同一套编号。
+ * 4. **正文按需拉取**（2026-09-19）。`sources` 事件里**没有 snippet**：正文会让
+ *    SSE 帧随「条数 × 摘要长度」双向膨胀，服务端只能把它压到 20 字
+ *    （实测用户看到「随着明珠集团信息化建设的不断深入，因传统」这种残句）。
+ *    现在改为按 `chunkId` 调 `getSourceChunks()` 取完整原文。
  */
 const props = withDefaults(
   defineProps<{
@@ -119,18 +124,113 @@ function toPageNumber(value: null | number | undefined): null | number {
   return typeof value === 'number' && value > 0 ? value : null;
 }
 
+// ---------------------------------------------------------------------------
+// 正文按需拉取
+//
+// 三个必须处理好的点：
+//
+// 1. **按 chunkId 回填，不能按数组下标**。接口不保证顺序、也不保证每个编号都命中
+//    （文档可能在问答之后被删除），靠下标会把正文贴到别的引用上。
+// 2. **整列表批量拉一次，不是每条一个请求**。一次展开通常十几条，逐条请求会产生
+//    十几个往返；接口本身也设计成批量的（上限 200 条）。
+// 3. **失败要能被看见**。静默留白会让用户以为「这条本来就没内容」，
+//    而真相是请求挂了 —— 必须区分出「加载中 / 加载失败 / 确实取不到」三种状态。
+// ---------------------------------------------------------------------------
+
+/** chunkId -> 正文内容。取不到（文档已删）的不进 map */
+const contentMap = ref<Map<number, string>>(new Map());
+/** chunkId -> 加载失败标记 */
+const failedIds = ref<Set<number>>(new Set());
+/** 是否正在拉取（整列表共用一个状态，因为是一次批量请求） */
+const loading = ref(false);
+
 /**
- * 片段折叠阈值（字符数）。
+ * 收集本次需要拉取的 chunkId。
  *
- * snippet 是上游切块的**原文**，实测最长 500 字，且常含 Markdown 表格；
- * 用 `white-space: pre-wrap` 渲染后单个片段能撑到 **693px** 高，
- * 6 条来源就是两千多像素的滚动墙。超过阈值时默认折叠为 3 行 + 「展开全文」。
+ * 只取「当前条目里、还没拉过的」—— 列表收敛后条目会变（答案标注不同），
+ * 每次变化都重新拉没拉过的部分，已有内容不重复请求。
+ */
+function pendingChunkIds(): number[] {
+  const result: number[] = [];
+  for (const entry of items.value) {
+    const id = entry.source.chunkId;
+    if (typeof id !== 'number') continue;
+    if (contentMap.value.has(id) || failedIds.value.has(id)) continue;
+    if (result.includes(id)) continue;
+    result.push(id);
+  }
+  return result;
+}
+
+async function loadContents(): Promise<void> {
+  const ids = pendingChunkIds();
+  if (ids.length === 0) {
+    return;
+  }
+  loading.value = true;
+  try {
+    const chunks = await getSourceChunks(ids);
+    // 先落成功项：局部更新而非整体替换，避免把并发请求的结果覆盖掉
+    const next = new Map(contentMap.value);
+    for (const chunk of chunks) {
+      if (typeof chunk.chunkId === 'number') {
+        next.set(chunk.chunkId, chunk.content ?? '');
+      }
+    }
+    contentMap.value = next;
+    // 请求成功但某些 id 没回来 = 文档已删，标记为「取不到」而不是永远重试
+    const missing = ids.filter((id) => !next.has(id));
+    if (missing.length > 0) {
+      const nextFailed = new Set(failedIds.value);
+      for (const id of missing) nextFailed.add(id);
+      failedIds.value = nextFailed;
+    }
+  } catch {
+    // 整批请求失败（网络抖动 / 服务短暂不可用）：整批标记为「取不到」。
+    //
+    // 刻意**不**留一个「稍后自动重试」的口子：`pendingChunkIds()` 会跳过
+    // `failedIds` 里的编号，如果网络一直不通、这里又不写 failedIds，
+    // watch 每次触发都会重新发一轮注定失败的请求 —— 变成重试风暴。
+    // 用户想重试时刷新页面 / 重新提问即可（那会重建组件）。
+    const nextFailed = new Set(failedIds.value);
+    for (const id of ids) nextFailed.add(id);
+    failedIds.value = nextFailed;
+  } finally {
+    loading.value = false;
+  }
+}
+
+/** 某条来源的展示状态 */
+function snippetState(chunkId: null | number | undefined): {
+  failed: boolean;
+  loading: boolean;
+  text: null | string;
+} {
+  if (typeof chunkId !== 'number') {
+    return { failed: true, loading: false, text: null };
+  }
+  if (contentMap.value.has(chunkId)) {
+    return {
+      failed: false,
+      loading: false,
+      text: contentMap.value.get(chunkId) ?? '',
+    };
+  }
+  return {
+    failed: failedIds.value.has(chunkId),
+    loading: loading.value,
+    text: null,
+  };
+}
+
+/**
+ * 正文折叠阈值（字符数）。
+ *
+ * 现在是**完整 chunk 原文**（实测最长 1346 字），且常含 Markdown 表格；
+ * 用 `white-space: pre-wrap` 渲染后单个片段能撑到 693px 高，6 条来源就是两千多像素的滚动墙。
+ * 超过阈值时默认折叠为 3 行 + 「展开全文」。
  */
 const SNIPPET_CLAMP_CHARS = 160;
-
-function needsSnippetToggle(snippet: null | string | undefined): boolean {
-  return (snippet?.length ?? 0) > SNIPPET_CLAMP_CHARS;
-}
 
 /** 已展开全文的片段（按原始证据编号记录） */
 const expandedSnippets = ref<Set<number>>(new Set());
@@ -148,6 +248,16 @@ function toggleSnippet(index: number): void {
     next.add(index);
   }
   expandedSnippets.value = next;
+}
+
+/** 是否需要折叠开关：只对「已加载且够长」的正文显示 */
+function needsSnippetToggle(entry: CitedSourceEntry): boolean {
+  const state = snippetState(entry.source.chunkId);
+  return (
+    !state.failed &&
+    state.text !== null &&
+    state.text.length > SNIPPET_CLAMP_CHARS
+  );
 }
 
 /**
@@ -221,6 +331,19 @@ watch(
   },
 );
 
+// 列表一展开就拉正文。不挂在条目自身上：批量请求需要「一次性知道要拉哪些」，
+// 逐条触发会退化成 N 个请求。
+//
+// `immediate: true` 是必要的：正文拉取与「用户是否展开列表」无关 ——
+// 折叠状态下 `ol` 也渲染（`v-show`），正文早一点到位，展开时就不用等。
+watch(
+  [() => expanded.value, items, () => props.defaultExpanded],
+  () => {
+    void loadContents();
+  },
+  { immediate: true },
+);
+
 onBeforeUnmount(() => {
   if (highlightTimer !== null) {
     clearTimeout(highlightTimer);
@@ -272,19 +395,37 @@ onBeforeUnmount(() => {
           </span>
         </div>
         <!--
+          正文是**按需拉取**的（`sources` 事件里没有 snippet，见 script 顶部说明），
+          因此这里要区分三种状态：加载中 / 取不到 / 有内容。
+          静默留白会让用户以为「这条本来就没内容」，而真相可能是请求挂了。
+        -->
+        <p
+          v-if="snippetState(entry.source.chunkId).loading"
+          class="qa-sources__snippet is-muted"
+        >
+          正在加载原文…
+        </p>
+        <p
+          v-else-if="snippetState(entry.source.chunkId).failed"
+          class="qa-sources__snippet is-muted"
+        >
+          原文暂不可用（文档可能已被删除）
+        </p>
+        <!--
           snippet 走 `toPlainTextHtml` 转义后再 v-html：它是上游文档原文，属不可信内容。
           用块级 disable 而不是 `eslint-disable-next-line` —— 后者只作用于紧邻的下一行，
           一旦 prettier 把 `<p>` 拆成多行，`v-html` 就跑到第 3 行，禁用会静默失效。
         -->
         <!-- eslint-disable vue/no-v-html -->
         <p
+          v-else
           class="qa-sources__snippet"
           :class="{ 'is-clamped': !isSnippetExpanded(entry.index) }"
-          v-html="toPlainTextHtml(entry.source.snippet)"
+          v-html="toPlainTextHtml(snippetState(entry.source.chunkId).text)"
         ></p>
         <!-- eslint-enable vue/no-v-html -->
         <button
-          v-if="needsSnippetToggle(entry.source.snippet)"
+          v-if="needsSnippetToggle(entry)"
           class="qa-sources__snippet-toggle"
           type="button"
           @click="toggleSnippet(entry.index)"
@@ -411,6 +552,18 @@ onBeforeUnmount(() => {
   color: hsl(var(--foreground) / 80%);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+/**
+ * 加载中 / 取不到：比正文更弱。
+ *
+ * 这两句文案不是「内容」，是「状态」。若沿用正文的 80% 前景色，
+ * 用户会把它当成真实原文来读 —— 尤其「原文暂不可用」很容易被误读成
+ * 「这条来源的正文就这么一句话」。
+ */
+.qa-sources__snippet.is-muted {
+  font-style: normal;
+  color: hsl(var(--muted-foreground) / 85%);
 }
 
 /**

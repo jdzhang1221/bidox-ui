@@ -70,12 +70,40 @@ export namespace BidKnowledgeQaApi {
     retrievalScore?: number;
     /** 排序分类型：vector / keyword / rrf / reranker */
     scoreType?: string;
-    /** 命中片段文本。**必须按纯文本渲染** */
-    snippet?: string;
-    /** 产生该 chunk 的确切索引版本（= Java 侧 parse log 编号） */
+    /**
+     * 产生该 chunk 的确切索引版本（= Java 侧 parse log 编号）
+     */
     indexVersion?: number;
     /** 该索引版本对应的第几次解析。Python 不返回，由 Java 精确回填 */
     attemptNo?: number;
+    /**
+     * ⚠️ 已废弃：正文**不再随 `sources` 事件下发**（2026-09-19）。
+     *
+     * 它会让 SSE 帧随「条数 × 摘要长度」双向膨胀，迫使服务端把摘要压到 20 字。
+     * 现在恒为 `undefined`；正文改由 `getSourceChunks()` 按需拉取。
+     * 字段保留仅为兼容历史消息快照（那时存的还是有摘要的版本）。
+     */
+    snippet?: string;
+  }
+
+  /**
+   * 按 chunk 编号取回的引用原文。
+   *
+   * 与 `Source` 的区别：这是**按需拉取的完整正文**（不截断），
+   * 而 `Source` 是随流推送的**列表元数据**。
+   */
+  export interface SourceChunk {
+    chunkId?: number;
+    documentId?: number;
+    sectionId?: number;
+    title?: string;
+    /** paragraph / table / list / heading / mixed */
+    chunkType?: string;
+    pageStart?: number;
+    pageEnd?: number;
+    indexVersion?: number;
+    /** 完整正文，展示层自行折叠 */
+    content?: string;
   }
 
   /** 问答知识库选项（只含当前租户启用库的 id/name） */
@@ -160,5 +188,23 @@ export function getRequestStatus(clientRequestId: string) {
   return requestClient.get<BidKnowledgeQaApi.RequestStatus>(
     '/bid/knowledge-qa/request/status',
     { params: { clientRequestId } },
+  );
+}
+
+/**
+ * 按 chunk 编号批量取引用**原文**（引用面板按需展开）。
+ *
+ * 为什么正文不在 `sources` 事件里：SSE 单事件上限 64KiB，而正文会让帧大小随
+ * 「条数 × 摘要长度」双向膨胀 —— 实测章节扩展到 167 条时，500 字摘要需要 283KB，
+ * 只能一路压到 20 字（用户看到的是一句残句，如「随着明珠集团信息化建设的不断深入，因传统」）。
+ * 移出帧后只剩元数据（单条约 187B），条数与摘要长度不再互相挤占预算。
+ *
+ * 返回**不保证顺序、也不保证每个编号都命中**（文档可能在问答之后被删除），
+ * 调用方必须按 `chunkId` 回填，不能依赖数组下标。
+ */
+export function getSourceChunks(chunkIds: number[]) {
+  return requestClient.post<BidKnowledgeQaApi.SourceChunk[]>(
+    '/bid/knowledge-qa/source/chunk',
+    { chunkIds },
   );
 }
